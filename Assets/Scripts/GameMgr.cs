@@ -2,6 +2,7 @@ using System.Collections;
 using System.Collections.Generic;
 using UnityEngine;
 using UnityEngine.UI;
+using System;
 
 public class GameMgr : MonoBehaviour
 {
@@ -24,6 +25,11 @@ public class GameMgr : MonoBehaviour
     }
 
     public Button startGameButton;
+    private DateTime gameStartTime;
+    public DateTime GameStartTime
+    {
+        get { return gameStartTime; }
+    }
 
     // Start is called before the first frame update
     void Start()
@@ -41,6 +47,9 @@ public class GameMgr : MonoBehaviour
 
     public void StartGame()
     {
+        InputMgr.Instance.Enable();
+        AudioMgr.Instance.PlayBackgroundMusic();
+        gameStartTime = DateTime.Now;
     }
 
     public void EndGame()
