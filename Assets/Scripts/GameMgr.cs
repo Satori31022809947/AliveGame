@@ -48,9 +48,11 @@ public class GameMgr : MonoBehaviour
 
     public void StartGame()
     {
+        long curTime = DateTime.UtcNow.ToUniversalTime().Ticks / 10000;
         StartGamePage.SetActive(false);
         InputMgr.Instance.Enable();
         AudioMgr.Instance.PlayBackgroundMusic();
+        BeatMgr.Instance.SetBeatStartTime(curTime);
         gameStartTime = DateTime.Now;
     }
 
