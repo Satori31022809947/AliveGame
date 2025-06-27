@@ -25,6 +25,7 @@ public class GameMgr : MonoBehaviour
     }
 
     public Button startGameButton;
+    public GameObject StartGamePage;
     private DateTime gameStartTime;
     public DateTime GameStartTime
     {
@@ -47,6 +48,7 @@ public class GameMgr : MonoBehaviour
 
     public void StartGame()
     {
+        StartGamePage.SetActive(false);
         InputMgr.Instance.Enable();
         AudioMgr.Instance.PlayBackgroundMusic();
         gameStartTime = DateTime.Now;
