@@ -2,6 +2,7 @@ using System.Collections;
 using System.Collections.Generic;
 using UnityEngine;
 using UnityEngine.InputSystem;
+using System;
 
 public enum InputType
 {
@@ -33,56 +34,168 @@ public class InputMgr : MonoBehaviour
         }
     }
 
-    private bool m_enable = false;
+    private bool m_enable = true; // 默认启用输入
     
-
-    // Start is called before the first frame update
-    void Start()
+    // 事件声明 - 当检测到输入时触发
+    public static event Action<InputType> OnInputDetected;
+    
+    // 具体方向移动事件 - 方便订阅特定方向
+    public static event Action OnMoveUp;
+    public static event Action OnMoveDown;
+    public static event Action OnMoveLeft;
+    public static event Action OnMoveRight;
+    public static event Action OnInteract;
+    
+    // 输入状态记录
+    private InputType lastInput = InputType.None;
+    
+    void Awake()
     {
-        
+        // 确保只有一个实例
+        if (instance == null)
+        {
+            instance = this;
+            DontDestroyOnLoad(gameObject);
+        }
+        else if (instance != this)
+        {
+            Destroy(gameObject);
+        }
     }
 
-    // Update is called once per frame
+    void Start()
+    {
+        Debug.Log("InputMgr: 输入管理器已启动");
+    }
+
     void Update()
     {
         if (m_enable)
         {
             InputType input = InputType.None;
+            
+            // 检测WASD移动输入
             if (Input.GetKeyDown(KeyCode.W))
             {
                 input = InputType.Up;
             }
-            if (Input.GetKeyDown(KeyCode.S))
+            else if (Input.GetKeyDown(KeyCode.S))
             {
                 input = InputType.Down;
             }
-            if (Input.GetKeyDown(KeyCode.A))
+            else if (Input.GetKeyDown(KeyCode.A))
             {
                 input = InputType.Left;
             }
-            if (Input.GetKeyDown(KeyCode.D))
+            else if (Input.GetKeyDown(KeyCode.D))
             {
                 input = InputType.Right;
             }
-            if (Input.GetKeyDown(KeyCode.Space))
+            else if (Input.GetKeyDown(KeyCode.Space))
             {
                 input = InputType.Interact;
             }
 
+            // 处理输入
             if (input != InputType.None)
             {
-                // TODO: try do input
+                ProcessInput(input);
             }
         }
     }
+    
+    /// <summary>
+    /// 处理检测到的输入
+    /// </summary>
+    /// <param name="inputType">输入类型</param>
+    private void ProcessInput(InputType inputType)
+    {
+        lastInput = inputType;
+        
+        // 触发通用输入事件
+        OnInputDetected?.Invoke(inputType);
+        
+        // 触发具体的方向事件
+        switch (inputType)
+        {
+            case InputType.Up:
+                OnMoveUp?.Invoke();
+                Debug.Log("InputMgr: 检测到向上移动输入 (W键)");
+                break;
+                
+            case InputType.Down:
+                OnMoveDown?.Invoke();
+                Debug.Log("InputMgr: 检测到向下移动输入 (S键)");
+                break;
+                
+            case InputType.Left:
+                OnMoveLeft?.Invoke();
+                Debug.Log("InputMgr: 检测到向左移动输入 (A键)");
+                break;
+                
+            case InputType.Right:
+                OnMoveRight?.Invoke();
+                Debug.Log("InputMgr: 检测到向右移动输入 (D键)");
+                break;
+                
+            case InputType.Interact:
+                OnInteract?.Invoke();
+                Debug.Log("InputMgr: 检测到交互输入 (空格键)");
+                break;
+        }
+    }
 
+    /// <summary>
+    /// 启用输入检测
+    /// </summary>
     public void Enable()
     {
         m_enable = true;
+        Debug.Log("InputMgr: 输入检测已启用");
     }
 
+    /// <summary>
+    /// 禁用输入检测
+    /// </summary>
     public void Disable()
     {
         m_enable = false;
+        Debug.Log("InputMgr: 输入检测已禁用");
+    }
+    
+    /// <summary>
+    /// 检查输入是否启用
+    /// </summary>
+    public bool IsEnabled()
+    {
+        return m_enable;
+    }
+    
+    /// <summary>
+    /// 获取上次检测到的输入
+    /// </summary>
+    public InputType GetLastInput()
+    {
+        return lastInput;
+    }
+    
+    /// <summary>
+    /// 清空所有事件订阅（用于场景切换等情况）
+    /// </summary>
+    public static void ClearAllEvents()
+    {
+        OnInputDetected = null;
+        OnMoveUp = null;
+        OnMoveDown = null;
+        OnMoveLeft = null;
+        OnMoveRight = null;
+        OnInteract = null;
+        Debug.Log("InputMgr: 已清空所有事件订阅");
+    }
+    
+    void OnDestroy()
+    {
+        // 当InputMgr被销毁时清空事件
+        ClearAllEvents();
     }
 }

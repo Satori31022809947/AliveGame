@@ -19,30 +19,92 @@ public class PlayerController : MonoBehaviour
     
     void Start()
     {
+        // 订阅输入事件
+        SubscribeToInputEvents();
+        
         // 延迟一帧确保BlockManager已经初始化
         StartCoroutine(InitializePlayerPosition());
     }
 
     void Update()
     {
-        // 监听WASD键输入
+        // 不再在Update中检测输入，改为使用事件系统
+        // 输入检测现在由InputMgr处理
+    }
+    
+    /// <summary>
+    /// 订阅InputMgr的输入事件
+    /// </summary>
+    private void SubscribeToInputEvents()
+    {
+        // 订阅具体方向的移动事件
+        InputMgr.OnMoveUp += () => HandleMoveInput(Direction.Up);
+        InputMgr.OnMoveDown += () => HandleMoveInput(Direction.Down);
+        InputMgr.OnMoveLeft += () => HandleMoveInput(Direction.Left);
+        InputMgr.OnMoveRight += () => HandleMoveInput(Direction.Right);
+        
+        // 订阅交互事件（可选）
+        InputMgr.OnInteract += HandleInteractInput;
+        
+        Debug.Log("PlayerController: 已订阅输入事件");
+    }
+    
+    /// <summary>
+    /// 取消订阅输入事件
+    /// </summary>
+    private void UnsubscribeFromInputEvents()
+    {
+        InputMgr.OnMoveUp -= () => HandleMoveInput(Direction.Up);
+        InputMgr.OnMoveDown -= () => HandleMoveInput(Direction.Down);
+        InputMgr.OnMoveLeft -= () => HandleMoveInput(Direction.Left);
+        InputMgr.OnMoveRight -= () => HandleMoveInput(Direction.Right);
+        InputMgr.OnInteract -= HandleInteractInput;
+        
+        Debug.Log("PlayerController: 已取消订阅输入事件");
+    }
+    
+    /// <summary>
+    /// 处理移动输入
+    /// </summary>
+    /// <param name="direction">移动方向</param>
+    private void HandleMoveInput(Direction direction)
+    {
+        // 只有在不移动时才处理输入
         if (!isMoving)
         {
-            if (Input.GetKeyDown(KeyCode.W))
+            MoveInDirection(direction);
+        }
+    }
+    
+    /// <summary>
+    /// 处理交互输入
+    /// </summary>
+    private void HandleInteractInput()
+    {
+        if (!isMoving)
+        {
+            Debug.Log("PlayerController: 处理交互输入");
+            // 在这里可以添加交互逻辑，比如：
+            // - 与当前地块交互
+            // - 触发特殊效果
+            // - 打开菜单等
+            
+            if (currentBlock != null)
             {
-                MoveInDirection(Direction.Up);
-            }
-            else if (Input.GetKeyDown(KeyCode.S))
-            {
-                MoveInDirection(Direction.Down);
-            }
-            else if (Input.GetKeyDown(KeyCode.A))
-            {
-                MoveInDirection(Direction.Left);
-            }
-            else if (Input.GetKeyDown(KeyCode.D))
-            {
-                MoveInDirection(Direction.Right);
+                Debug.Log($"与地块 {currentBlock.blockName} 交互");
+                
+                // 根据地块类型执行不同的交互
+                switch (currentBlock.blockType)
+                {
+                    case BlockType.Teleport:
+                        Debug.Log("激活传送地块！");
+                        // 可以在这里实现传送逻辑
+                        break;
+                        
+                    default:
+                        Debug.Log("这个地块没有特殊交互功能");
+                        break;
+                }
             }
         }
     }
@@ -182,8 +244,7 @@ public class PlayerController : MonoBehaviour
                 break;
                 
             case BlockType.Teleport:
-                Debug.Log("进入传送地块！");
-                // 可以在这里实现传送逻辑
+                Debug.Log("进入传送地块！按空格键激活传送");
                 break;
                 
             case BlockType.Obstacle:
@@ -231,5 +292,26 @@ public class PlayerController : MonoBehaviour
     public void SetToMatrixPosition(int row, int col)
     {
         SetPlayerToMatrixPosition(row, col);
+    }
+    
+    /// <summary>
+    /// 启用/禁用玩家输入
+    /// </summary>
+    public void SetInputEnabled(bool enabled)
+    {
+        if (enabled)
+        {
+            InputMgr.Instance.Enable();
+        }
+        else
+        {
+            InputMgr.Instance.Disable();
+        }
+    }
+    
+    void OnDestroy()
+    {
+        // 组件销毁时取消事件订阅，防止内存泄漏
+        UnsubscribeFromInputEvents();
     }
 }
