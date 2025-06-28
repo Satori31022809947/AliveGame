@@ -29,35 +29,35 @@
       "interactionType": "Collectible"
     },
     {
-      "itemName": "Obstacle",
+      "itemName": "Book",
       "coordinates": [
         {"row": 8, "col": 0}
       ],
       "interactionType": "Other"
     },
     {
-      "itemName": "Obstacle",
+      "itemName": "TV",
       "coordinates": [
         {"row": 5, "col": 3}
       ],
       "interactionType": "Other"
     },
     {
-      "itemName": "Obstacle",
+      "itemName": "Light",
       "coordinates": [
         {"row": 5, "col": 4}
       ],
       "interactionType": "Other"
     },
     {
-      "itemName": "Obstacle",
+      "itemName": "Vessel",
       "coordinates": [
         {"row": 2, "col": 5}
       ],
       "interactionType": "Other"
     },
     {
-      "itemName": "Obstacle",
+      "itemName": "FishTank",
       "coordinates": [
         {"row": 5, "col": 12}
       ],
@@ -72,18 +72,34 @@
       "interactionType": "Interactable"
     },
     {
-      "itemName": "INTERACT_SINGLE",
+      "itemName": "Bed",
       "coordinates": [
-        {"row": 7, "col": 5}
+        {"row": 2, "col": 0},
+        {"row": 2, "col": 1}
       ],
       "interactionType": "Interactable"
     },
     {
-      "itemName": "INTERACT_TRIPLE",
+      "itemName": "DinnerTable",
       "coordinates": [
-        {"row": 6, "col": 8},
-        {"row": 6, "col": 9},
-        {"row": 6, "col": 10}
+        {"row": 6, "col": 1},
+        {"row": 6, "col": 2}
+      ],
+      "interactionType": "Interactable"
+    },
+    {
+      "itemName": "Chair",
+      "coordinates": [
+        {"row": 4, "col": 6}
+      ],
+      "interactionType": "Interactable"
+    },
+    {
+      "itemName": "Curtain",
+      "coordinates": [
+        {"row": 0, "col": 6},
+        {"row": 0, "col": 7},
+        {"row": 0, "col": 8}
       ],
       "interactionType": "Interactable"
     }
