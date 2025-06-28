@@ -64,10 +64,10 @@
       "interactionType": "Other"
     },
     {
-      "itemName": "INTERACT",
+      "itemName": "Locker",
       "coordinates": [
-        {"row": 8, "col": 1},
-        {"row": 8, "col": 2}
+        {"row": 4, "col": 14},
+        {"row": 4, "col": 15}
       ],
       "interactionType": "Interactable"
     },
@@ -95,11 +95,34 @@
       "interactionType": "Interactable"
     },
     {
+      "itemName": "Chair",
+      "coordinates": [
+        {"row": 6, "col": 10}
+      ],
+      "interactionType": "Interactable"
+    },
+    {
       "itemName": "Curtain",
       "coordinates": [
         {"row": 0, "col": 6},
         {"row": 0, "col": 7},
         {"row": 0, "col": 8}
+      ],
+      "interactionType": "Interactable"
+    },
+    {
+      "itemName": "Sofa",
+      "coordinates": [
+        {"row": 7, "col": 7},
+        {"row": 7, "col": 8},
+        {"row": 7, "col": 9}
+      ],
+      "interactionType": "Interactable"
+    },
+    {
+      "itemName": "Clock",
+      "coordinates": [
+        {"row": 0, "col": 14}
       ],
       "interactionType": "Interactable"
     }
