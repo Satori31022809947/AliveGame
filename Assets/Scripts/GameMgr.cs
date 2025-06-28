@@ -31,6 +31,9 @@ public class GameMgr : MonoBehaviour
     public GameObject LosePage;
     public GameObject WinPage;
     public GameObject PerfectWinPage;
+    
+    [Header("屏幕震动")]
+    public CameraController cameraController; // 摄像机控制器引用
 
     [SerializeField] public List<Vector2Int> winPositions = new List<Vector2Int>(); // 修改为二维坐标
 
@@ -45,6 +48,16 @@ public class GameMgr : MonoBehaviour
         if (startGameButton != null)
         {
             startGameButton.onClick.AddListener(StartGame);
+        }
+        
+        // 如果没有手动设置CameraController，尝试自动查找
+        if (cameraController == null)
+        {
+            cameraController = FindObjectOfType<CameraController>();
+            if (cameraController == null)
+            {
+                Debug.LogWarning("GameMgr: 未找到CameraController，屏幕震动功能将不可用");
+            }
         }
     }
 
@@ -63,6 +76,10 @@ public class GameMgr : MonoBehaviour
     {
         StartGamePage.SetActive(false);
         AudioMgr.Instance.PlayBackgroundMusic();
+        
+        // 在游戏开始时订阅OnInteractFailed事件
+        SubscribeToInputEvents();
+        
         OnGameStart?.Invoke();
         // 延迟启用 InputMgr 和 BeatMgr
         Invoke("EnableInputAndBeat", enableDelayTime / 1000f);
@@ -78,14 +95,54 @@ public class GameMgr : MonoBehaviour
 
     public void EndGame()
     {
+        // 在游戏结束时取消订阅OnInteractFailed事件
+        UnsubscribeFromInputEvents();
+        
         OnGameEnd?.Invoke();
         AudioMgr.Instance.StopBackgroundMusic();
         InputMgr.Instance.Disable();
         BeatMgr.Instance.Disable();
     }
+    
+    /// <summary>
+    /// 订阅输入事件
+    /// </summary>
+    private void SubscribeToInputEvents()
+    {
+        InputMgr.OnInteractFailed += HandleInteractFailed;
+        Debug.Log("GameMgr: 已订阅OnInteractFailed事件");
+    }
+    
+    /// <summary>
+    /// 取消订阅输入事件
+    /// </summary>
+    private void UnsubscribeFromInputEvents()
+    {
+        InputMgr.OnInteractFailed -= HandleInteractFailed;
+        Debug.Log("GameMgr: 已取消订阅OnInteractFailed事件");
+    }
+    
+    /// <summary>
+    /// 处理交互失败事件，触发屏幕震动
+    /// </summary>
+    private void HandleInteractFailed()
+    {
+        if (cameraController != null)
+        {
+            // 触发0.2秒的屏幕震动
+            cameraController.StartShake(0.2f);
+            Debug.Log("GameMgr: 交互失败，触发屏幕震动0.2秒");
+        }
+        else
+        {
+            Debug.LogWarning("GameMgr: CameraController为空，无法触发屏幕震动");
+        }
+    }
 
     private void OnDestroy()
     {
+        // 确保在销毁时取消订阅，避免内存泄漏
+        UnsubscribeFromInputEvents();
         instance = null;
     }
 
