@@ -1496,6 +1496,8 @@ public class BlockManager : MonoBehaviour
     /// <returns>相邻的interactable物体名称列表</returns>
     public List<string> GetAdjacentInteractableItems(int currentRow, int currentCol)
     {
+        Debug.Log($"BlockManager: 开始检查位置({currentRow}, {currentCol})相邻的interactable物体");
+        
         List<string> interactableItems = new List<string>();
         HashSet<string> foundItems = new HashSet<string>(); // 避免重复添加同一个物体
         
@@ -1506,23 +1508,110 @@ public class BlockManager : MonoBehaviour
         {
             BlockData adjacentBlock = GetAdjacentBlock(currentRow, currentCol, direction);
             
-            if (adjacentBlock != null && adjacentBlock.hasItem && 
-                adjacentBlock.interactionType == ItemInteractionType.Interactable &&
-                !adjacentBlock.isItemCollected)
+            Debug.Log($"BlockManager: 检查{direction}方向的相邻地块: {(adjacentBlock != null ? $"({adjacentBlock.row}, {adjacentBlock.column})" : "null")}");
+            
+            if (adjacentBlock != null)
             {
-                // 使用linkedItemName或itemName作为物体标识
-                string itemIdentifier = !string.IsNullOrEmpty(adjacentBlock.linkedItemName) 
-                    ? adjacentBlock.linkedItemName 
-                    : adjacentBlock.itemName;
+                Debug.Log($"BlockManager: 相邻地块状态 - hasItem: {adjacentBlock.hasItem}, interactionType: {adjacentBlock.interactionType}, isItemCollected: {adjacentBlock.isItemCollected}");
                 
-                if (!foundItems.Contains(itemIdentifier))
+                if (adjacentBlock.hasItem && 
+                    adjacentBlock.interactionType == ItemInteractionType.Interactable &&
+                    !adjacentBlock.isItemCollected)
                 {
-                    foundItems.Add(itemIdentifier);
-                    interactableItems.Add(itemIdentifier);
+                    // 使用linkedItemName或itemName作为物体标识
+                    string itemIdentifier = !string.IsNullOrEmpty(adjacentBlock.linkedItemName) 
+                        ? adjacentBlock.linkedItemName 
+                        : adjacentBlock.itemName;
+                    
+                    Debug.Log($"BlockManager: 找到interactable物体: {itemIdentifier}");
+                    
+                    if (!foundItems.Contains(itemIdentifier))
+                    {
+                        foundItems.Add(itemIdentifier);
+                        interactableItems.Add(itemIdentifier);
+                        Debug.Log($"BlockManager: 添加到结果列表: {itemIdentifier}");
+                    }
+                    else
+                    {
+                        Debug.Log($"BlockManager: 物体{itemIdentifier}已在列表中，跳过");
+                    }
                 }
             }
         }
         
+        Debug.Log($"BlockManager: 检查完成，找到{interactableItems.Count}个相邻的interactable物体");
         return interactableItems;
+    }
+    
+    /// <summary>
+    /// 找到离指定位置最近的interactable物体的中心位置
+    /// </summary>
+    /// <param name="fromRow">起始行坐标</param>
+    /// <param name="fromCol">起始列坐标</param>
+    /// <returns>最近的interactable物体的中心位置，如果没有找到则返回Vector3.zero</returns>
+    public Vector3 GetNearestInteractableCenterPosition(int fromRow, int fromCol)
+    {
+        Vector3 fromPosition = GetBlockAt(fromRow, fromCol)?.position ?? Vector3.zero;
+        float minDistance = float.MaxValue;
+        Vector3 nearestCenterPosition = Vector3.zero;
+        
+        // 收集所有interactable物体及其占用的地块
+        Dictionary<string, List<BlockData>> interactableGroups = new Dictionary<string, List<BlockData>>();
+        
+        // 遍历所有地块，按物体名称分组
+        foreach (var blockObj in blocks)
+        {
+            BlockData blockData = blockObj.GetComponent<BlockController>().blockData;
+            
+            if (blockData.hasItem && 
+                blockData.interactionType == ItemInteractionType.Interactable &&
+                !blockData.isItemCollected)
+            {
+                string itemIdentifier = !string.IsNullOrEmpty(blockData.linkedItemName) 
+                    ? blockData.linkedItemName 
+                    : blockData.itemName;
+                
+                if (!interactableGroups.ContainsKey(itemIdentifier))
+                {
+                    interactableGroups[itemIdentifier] = new List<BlockData>();
+                }
+                
+                interactableGroups[itemIdentifier].Add(blockData);
+            }
+        }
+        
+        // 找到距离最近的interactable物体
+        foreach (var kvp in interactableGroups)
+        {
+            string itemName = kvp.Key;
+            List<BlockData> itemBlocks = kvp.Value;
+            
+            // 计算这个物体的中心位置
+            Vector3 centerPosition = CalculateCenterPosition(itemBlocks);
+            
+            // 计算距离（使用平面距离，忽略Y轴）
+            Vector3 fromPos2D = new Vector3(fromPosition.x, 0, fromPosition.z);
+            Vector3 centerPos2D = new Vector3(centerPosition.x, 0, centerPosition.z);
+            float distance = Vector3.Distance(fromPos2D, centerPos2D);
+            
+            if (distance < minDistance)
+            {
+                minDistance = distance;
+                nearestCenterPosition = centerPosition;
+            }
+            
+            Debug.Log($"BlockManager: 找到interactable物体 {itemName}，中心位置: {centerPosition}，距离: {distance:F2}");
+        }
+        
+        if (minDistance < float.MaxValue)
+        {
+            Debug.Log($"BlockManager: 最近的interactable物体中心位置: {nearestCenterPosition}，距离: {minDistance:F2}");
+            return nearestCenterPosition;
+        }
+        else
+        {
+            Debug.LogWarning("BlockManager: 没有找到任何interactable物体");
+            return Vector3.zero;
+        }
     }
 }

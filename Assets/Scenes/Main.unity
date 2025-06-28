@@ -373,6 +373,14 @@ PrefabInstance:
       value: 4
       objectReference: {fileID: 0}
     - target: {fileID: 6053746084808061819, guid: 96a8ed3e8d6d14487b3e5de875bb7ffa, type: 3}
+      propertyPath: teleportMoveTime
+      value: 0.2
+      objectReference: {fileID: 0}
+    - target: {fileID: 6053746084808061819, guid: 96a8ed3e8d6d14487b3e5de875bb7ffa, type: 3}
+      propertyPath: animateReturnTeleport
+      value: 1
+      objectReference: {fileID: 0}
+    - target: {fileID: 6053746084808061819, guid: 96a8ed3e8d6d14487b3e5de875bb7ffa, type: 3}
       propertyPath: squashCurve.m_Curve.Array.size
       value: 2
       objectReference: {fileID: 0}
