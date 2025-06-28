@@ -31,6 +31,8 @@ public class GameMgr : MonoBehaviour
     public GameObject LosePage;
     public GameObject WinPage;
     public GameObject PerfectWinPage;
+    public GameObject firstInteractTipUI;
+    public GameObject secondInteractTipUI;
     
     [Header("屏幕震动")]
     public CameraController cameraController; // 摄像机控制器引用

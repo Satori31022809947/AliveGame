@@ -301,6 +301,12 @@ public class PlayerController : MonoBehaviour
             }
         }
     }
+
+    public bool HasNearInteractableItem()
+    {
+        List<string> adjacentInteractableItems = BlockManager.Instance.GetAdjacentInteractableItems(currentRow, currentColumn);
+        return adjacentInteractableItems.Count > 0;
+    }
     
     /// <summary>
     /// 初始化玩家位置到指定矩阵位置
@@ -393,6 +399,7 @@ public class PlayerController : MonoBehaviour
             targetPosition.y += 4.15f;
             targetPosition.z += 3.79f;
             transform.position = targetPosition;
+            HandleTips();
             
             Debug.Log($"玩家移动到矩阵位置: ({row}, {col}) - {targetBlock.blockName}");
         }
@@ -463,7 +470,6 @@ public class PlayerController : MonoBehaviour
         {
             actualTransitionTime *= currentBlock.movementSpeed;
         }
-        
         while (elapsedTime < actualTransitionTime)
         {
             elapsedTime += Time.deltaTime;
@@ -495,6 +501,7 @@ public class PlayerController : MonoBehaviour
             }
             
             transform.position = currentPosition;
+            HandleTips();
             
             // 如果已经完成移动，直接跳出循环
             if (progress >= 1f)
@@ -519,6 +526,7 @@ public class PlayerController : MonoBehaviour
         {
             // 确保最终位置准确
             transform.position = targetPosition;
+            HandleTips();
         }
         
         
@@ -561,6 +569,7 @@ public class PlayerController : MonoBehaviour
         currentColumn = targetBlock.column;
         currentBlock = targetBlock;
         transform.position = GetFinalPosition(currentBlock);
+        HandleTips();
 
         // 变大动画
         elapsedTime = 0f;
@@ -1418,6 +1427,7 @@ public class PlayerController : MonoBehaviour
             rememberedWorldPosition = currentBlock.position;
         }
         hasRememberedPosition = true;
+        HandleTips();
         
         Debug.Log($"PlayerController: 记住当前位置完成 - 矩阵坐标: ({rememberedRow}, {rememberedColumn}), 世界坐标: {rememberedWorldPosition}");
         Debug.Log($"PlayerController: hasRememberedPosition设置为: {hasRememberedPosition}");
@@ -1435,6 +1445,7 @@ public class PlayerController : MonoBehaviour
         rememberedRow = -1;
         rememberedColumn = -1;
         rememberedWorldPosition = Vector3.zero;
+        HandleTips();
         
         // 清除记忆时重新启用移动
         isMovementDisabled = false;
@@ -1708,6 +1719,26 @@ public class PlayerController : MonoBehaviour
         {
             Debug.LogWarning("PlayerController: 无法找到最近的地块来更新矩阵坐标");
         }
+    }
+
+    public void HandleTips()
+    {
+        if (hasRememberedPosition)
+        {
+            GameMgr.Instance.firstInteractTipUI.SetActive(false);
+            GameMgr.Instance.secondInteractTipUI.SetActive(true);
+        }
+        else if (HasNearInteractableItem())
+        {
+            GameMgr.Instance.firstInteractTipUI.SetActive(true);
+            GameMgr.Instance.secondInteractTipUI.SetActive(false);
+        }
+        else
+        {
+            GameMgr.Instance.firstInteractTipUI.SetActive(false);
+            GameMgr.Instance.secondInteractTipUI.SetActive(false);
+        }
+
     }
     
     void OnDestroy()
