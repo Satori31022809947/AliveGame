@@ -186,7 +186,7 @@ public class PlayerController : MonoBehaviour
             
             Vector3 targetPosition = targetBlock.position;
             // 设置Y坐标稍微高一点，避免嵌入地块
-            targetPosition.y += 1f;
+            targetPosition.y += 5.68f;
             transform.position = targetPosition;
             
             Debug.Log($"玩家移动到矩阵位置: ({row}, {col}) - {targetBlock.blockName}");
@@ -208,7 +208,7 @@ public class PlayerController : MonoBehaviour
         Vector3 startPosition = transform.position;
         Vector3 targetPosition = targetBlock.position;
         // 设置Y坐标稍微高一点，避免嵌入地块
-        targetPosition.y += 1f;
+        targetPosition.y += 5.68f;
         
         float elapsedTime = 0f;
         float actualTransitionTime = transitionTime;
