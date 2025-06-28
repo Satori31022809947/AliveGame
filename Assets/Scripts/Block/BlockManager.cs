@@ -418,8 +418,6 @@ public class BlockManager : MonoBehaviour
             try
             {
                 string jsonContent = File.ReadAllText(configPath);
-                Debug.Log($"BlockManager: 读取JSON内容长度: {jsonContent.Length}");
-                Debug.Log($"BlockManager: JSON内容预览: {jsonContent.Substring(0, Mathf.Min(200, jsonContent.Length))}...");
                 
                 ItemConfigFile configFile = JsonUtility.FromJson<ItemConfigFile>(jsonContent);
                 
@@ -462,9 +460,6 @@ public class BlockManager : MonoBehaviour
     /// </summary>
     private void ApplyItemConfig(ItemConfig config)
     {
-        Debug.Log($"BlockManager: 开始处理道具 {config.itemName}");
-        Debug.Log($"BlockManager: 道具名称: {config.itemName}");
-        Debug.Log($"BlockManager: 交互类型: {config.interactionType}");
         
         // 验证coordinates数组
         if (config.coordinates == null)
@@ -493,7 +488,6 @@ public class BlockManager : MonoBehaviour
         List<BlockData> validBlocks = new List<BlockData>();
         for (int i = 0; i < config.coordinates.Length && i < 3; i++)
         {
-            Debug.Log($"BlockManager: 处理第 {i+1} 个坐标");
             CoordinateData coord = config.coordinates[i];
             
             // 验证坐标格式
@@ -506,7 +500,6 @@ public class BlockManager : MonoBehaviour
             int row = coord.row;
             int col = coord.col;
             
-            Debug.Log($"BlockManager: 坐标 [{i+1}]: ({row}, {col})");
             
             // 检查坐标是否在矩阵范围内
             if (!IsValidPosition(row, col))
@@ -519,7 +512,6 @@ public class BlockManager : MonoBehaviour
             BlockData block = GetBlockAt(row, col);
             if (block != null)
             {
-                Debug.Log($"BlockManager: 坐标 ({row}, {col}) 找到有效地块，ID: {block.blockId}");
                 validBlocks.Add(block);
             }
             else
@@ -546,6 +538,7 @@ public class BlockManager : MonoBehaviour
             block.linkedItemName = config.itemName; // 所有格子都链接到同一个道具名称
             
             // 只在第一个地块创建3D模型（主要显示位置）
+            //TODO：根据格子大小适配3d模型
             if (i == 0)
             {
                 CreateSimpleItemInstance(block, config);
