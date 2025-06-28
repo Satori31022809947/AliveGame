@@ -72,6 +72,7 @@ public class NoiseControlMgr : MonoBehaviour
         if (noiseValue >= noiseThreshold)
         {
             Debug.Log("Dead");
+            GameMgr.Instance.Lose();
         }
         else if (noiseValue <= 0)
         {

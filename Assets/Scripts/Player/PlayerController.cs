@@ -45,6 +45,7 @@ public class PlayerController : MonoBehaviour
         {
             if (currentBlock.isDangerous)
             {
+                GameMgr.Instance.Lose();
                 Debug.Log("player in dangerous!!!");
             }
         }
@@ -443,6 +444,29 @@ public class PlayerController : MonoBehaviour
         //     default:
         //         return false;
         // }
+        return true;
+    }
+    
+    
+    
+    /// <summary>
+    /// 用于存储完美结局所需物品的列表，可根据需求在编辑器中配置
+    /// </summary>
+    [SerializeField] private List<string> requiredItemsForPerfectEnding = new List<string>();
+    
+    /// <summary>
+    /// 判断玩家是否收集齐了完美结局必须的物品
+    /// </summary>
+    /// <returns>如果收集齐了返回 true，否则返回 false</returns>
+    public bool HasCollectedAllRequiredItemsForPerfectEnding()
+    {
+        foreach (string item in requiredItemsForPerfectEnding)
+        {
+            if (!collectedItemNames.Contains(item))
+            {
+                return false;
+            }
+        }
         return true;
     }
     

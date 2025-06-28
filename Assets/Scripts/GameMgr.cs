@@ -27,6 +27,12 @@ public class GameMgr : MonoBehaviour
     public Button startGameButton;
     public GameObject StartGamePage;
     private DateTime gameStartTime;
+    public PlayerController mainPlayer;
+    public GameObject LosePage;
+    public GameObject WinPage;
+    public GameObject PerfectWinPage;
+
+    
     public DateTime GameStartTime
     {
         get { return gameStartTime; }
@@ -47,6 +53,7 @@ public class GameMgr : MonoBehaviour
     }
 
     [SerializeField] private int enableDelayTime = 3000; // 启用延迟时间（毫秒）
+    [SerializeField] public int BeatLimit = 200;       // 要在多少拍内逃脱
 
     public void StartGame()
     {
@@ -66,5 +73,37 @@ public class GameMgr : MonoBehaviour
 
     public void EndGame()
     {
+        AudioMgr.Instance.StopBackgroundMusic();
+        InputMgr.Instance.Disable();
+        BeatMgr.Instance.Disable();
+    }
+
+    public void Win()
+    {
+        if (mainPlayer != null && mainPlayer.HasCollectedAllRequiredItemsForPerfectEnding())
+        {   
+            Debug.Log("Perfect Win");
+            if (PerfectWinPage != null)
+            {
+                PerfectWinPage.SetActive(true);
+            }
+        }
+        else
+        {
+            Debug.Log(" Win");
+            if (WinPage != null)
+            {
+                WinPage.SetActive(true);
+            }
+        }
+    }
+
+    public void Lose()
+    {
+        Debug.Log("Lose");
+        if (LosePage != null)
+        {
+            LosePage.SetActive(true);
+        }
     }
 }
