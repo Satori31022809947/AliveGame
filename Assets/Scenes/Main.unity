@@ -410,7 +410,7 @@ PrefabInstance:
       objectReference: {fileID: 0}
     - target: {fileID: 7257544226167530681, guid: 96a8ed3e8d6d14487b3e5de875bb7ffa, type: 3}
       propertyPath: m_LocalPosition.y
-      value: 4.15
+      value: 4.11
       objectReference: {fileID: 0}
     - target: {fileID: 7257544226167530681, guid: 96a8ed3e8d6d14487b3e5de875bb7ffa, type: 3}
       propertyPath: m_LocalPosition.z
@@ -846,7 +846,7 @@ MonoBehaviour:
   startPosition: {x: 0, y: 0, z: 0}
   useCustomItemPrefab: 1
   itemPrefabPath: Prefabs/Item
-  interactPrefabPath: Prefabs/Interactable
+  interactPrefabPath: Prefabs/
   allowFallbackToGeometry: 1
   playerMoveTargets: 
   showDebugInfo: 1
