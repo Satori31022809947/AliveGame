@@ -640,8 +640,8 @@ MonoBehaviour:
   m_Script: {fileID: 11500000, guid: 6c265598e94044e1d8a9e861348b11ee, type: 3}
   m_Name: 
   m_EditorClassIdentifier: 
-  rows: 2
-  columns: 2
+  rows: 9
+  columns: 16
   blockPrefab: {fileID: 8559638154577248638, guid: 283272b50560f4001ab9ed4850377858, type: 3}
   autoGenerateBlocks: 1
   blockSpacing: 10
