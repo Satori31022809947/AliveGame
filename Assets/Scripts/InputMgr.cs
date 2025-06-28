@@ -113,6 +113,7 @@ public class InputMgr : MonoBehaviour
         if (currentBeat <= lastInputBeat)
         {
             isPerfect = false;
+            Debug.Log($"Unperfect Because {currentBeat} repeated move");
         }
         
         lastInputBeat = currentBeat;
@@ -129,7 +130,15 @@ public class InputMgr : MonoBehaviour
         }
         
         Debug.Log($"Input Succeed {inputType} at beat {currentBeat}");
-        isPerfect &= IsPerfectInput(curTime, currentBeat);
+        if (isPerfect)
+        {
+            isPerfect &= IsPerfectInput(curTime, currentBeat);
+            if (!isPerfect)
+            {
+                Debug.Log($"Unperfect Because {curTime} delta {BeatMgr.Instance.GetBeatTime(currentBeat) - curTime}");
+            }
+        }
+
         if (isPerfect)
         {
             StartCoroutine(DelayNonPerfectInputActions());
