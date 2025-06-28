@@ -618,7 +618,7 @@ MonoBehaviour:
   LosePage: {fileID: 1792973808}
   WinPage: {fileID: 39025440}
   PerfectWinPage: {fileID: 1461182668}
-  enableDelayTime: 3000
+  enableDelayTime: 1090
   BeatLimit: 200
 --- !u!4 &662386541
 Transform:
