@@ -6,8 +6,12 @@ public class BeatUI : MonoBehaviour
     [SerializeField] private Text beatIndexText; // 用于显示 BeatIndex 的 Text 组件
     [SerializeField] private GameObject[] objectsToShow; // 三个需要根据 BeatIndex 显示的 GameObject
 
+    [SerializeField] private GameObject DangerEffect;
+    [SerializeField] private GameObject WarningEffect;
+    
     private void Start()
     {
+        HideAllObjects();
     }
 
     public void Update()
@@ -19,11 +23,33 @@ public class BeatUI : MonoBehaviour
     {
     }
 
-    public void UpdateBeatUI(int beatIndex)
+    public void UpdateBeatUI(int beatIndex, BeatType beatType)
     {
         HideAllObjects();
         beatIndexText.text = "Beat Index: " + beatIndex;
         ShowObjectBasedOnIndex(beatIndex);
+        ShowEffect(beatType);
+    }
+
+    private void ShowEffect(BeatType beatType)
+    {
+        
+        switch (beatType)
+        {
+            
+            case BeatType.Warning:
+                if (WarningEffect != null)
+                {
+                    WarningEffect.SetActive(true);
+                }
+                break;
+            case BeatType.Dangerous:
+                if (DangerEffect != null)
+                {
+                    DangerEffect.SetActive(true);
+                }
+                break;
+        }
     }
 
     private void HideAllObjects()
@@ -34,6 +60,14 @@ public class BeatUI : MonoBehaviour
             {
                 obj.SetActive(false);
             }
+        }
+        if (WarningEffect != null)
+        {
+            WarningEffect.SetActive(false);
+        }
+        if (DangerEffect != null)
+        {
+            DangerEffect.SetActive(false);
         }
     }
 

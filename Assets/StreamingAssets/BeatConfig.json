@@ -1,0 +1,16 @@
+{
+    "beatSequences": [
+        {
+            "index": 6,
+            "type": "Warning"
+        },
+        {
+            "index": 7,
+            "type": "Warning"
+        },
+        {
+            "index": 8,
+            "type": "Dangerous"
+        }
+    ]
+}
