@@ -10,7 +10,7 @@
     {
       "itemName": "Eye",
       "coordinates": [
-        {"row": 5, "col": 9},
+        {"row": 5, "col": 9}
       ],
       "interactionType": "Collectible"
     },
@@ -24,33 +24,40 @@
     {
       "itemName": "Cloths",
       "coordinates": [
+        {"row": 6, "col": 15}
+      ],
+      "interactionType": "Collectible"
+    },
+    {
+      "itemName": "Obstacle",
+      "coordinates": [
         {"row": 8, "col": 0}
       ],
       "interactionType": "Other"
-    }
+    },
     {
-      "itemName": "Cloths",
+      "itemName": "Obstacle",
       "coordinates": [
         {"row": 5, "col": 3}
       ],
       "interactionType": "Other"
-    }
+    },
     {
-      "itemName": "Cloths",
+      "itemName": "Obstacle",
       "coordinates": [
         {"row": 5, "col": 4}
       ],
       "interactionType": "Other"
-    }
+    },
     {
-      "itemName": "Cloths",
+      "itemName": "Obstacle",
       "coordinates": [
         {"row": 2, "col": 5}
       ],
       "interactionType": "Other"
-    }
+    },
     {
-      "itemName": "Cloths",
+      "itemName": "Obstacle",
       "coordinates": [
         {"row": 5, "col": 12}
       ],
