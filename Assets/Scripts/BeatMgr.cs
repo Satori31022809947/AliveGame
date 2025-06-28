@@ -118,6 +118,11 @@ public class BeatMgr : MonoBehaviour
         // 一拍结束时候的处理
         NoiseControlMgr.Instance.OnBeatFinish(GetBeatType(beatIndex));
         beatIndex++;
+        if (beatIndex >= GameMgr.Instance.BeatLimit)
+        {
+            GameMgr.Instance.Lose();
+            return;
+        }
         // 一拍开始时候的处理
         BeatType beatType = GetBeatType(beatIndex);
         switch (beatType)
