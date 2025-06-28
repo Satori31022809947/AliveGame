@@ -89,6 +89,9 @@ public class PlayerController : MonoBehaviour
     
     // 移动控制系统
     private bool isMovementDisabled = false; // 是否禁用WASD移动
+    
+    // 躲藏系统
+    private Transform activatedChildTransform = null; // 当前激活的子物体
 
 
     void Start()
@@ -231,6 +234,24 @@ public class PlayerController : MonoBehaviour
                     Vector3 nearestCenter = BlockManager.Instance.GetNearestInteractableCenterPosition(currentRow, currentColumn);
                     if (nearestCenter != Vector3.zero)
                     {
+                        // 获取最近的可交互物体名称并检查是否为Closet
+                        string nearestInteractableName = GetNearestInteractableItemName(currentRow, currentColumn);
+                        if (nearestInteractableName == "Closet")
+                        {
+                            GameObject closetGameObject = GetNearestInteractableGameObject(currentRow, currentColumn);
+                            if (closetGameObject != null && closetGameObject.transform.childCount >= 2)
+                            {
+                                Transform secondChild = closetGameObject.transform.GetChild(1); // 获取第二个子物体（索引1）
+                                secondChild.gameObject.SetActive(true); // 设置子物体为激活状态
+                                activatedChildTransform = secondChild; // 记住当前激活的子物体
+                                Debug.Log($"已激活Closet的子物体: {secondChild.name}");
+                            }
+                            else
+                            {
+                                Debug.LogWarning("Closet物体不存在或子物体数量不足");
+                            }
+                        }
+                        
                         TeleportToWorldPosition(nearestCenter);
                         
                         // 禁用WASD移动
@@ -254,6 +275,9 @@ public class PlayerController : MonoBehaviour
                     Debug.Log("PlayerController: 执行第二次交互逻辑（传送回原位置）");
                     Debug.Log($"PlayerController: 准备传送回记忆位置({rememberedRow}, {rememberedColumn})");
                     
+                    // 禁用之前激活的子物体
+                    DeactivateHidingChild();
+                    
                     // 第二次交互：传送回记忆的位置
                     TeleportBackToRememberedPosition();
                     
@@ -273,6 +297,10 @@ public class PlayerController : MonoBehaviour
                 if (hasRememberedPosition)
                 {
                     Debug.Log("PlayerController: 检测到在interactable物体中心，执行返回逻辑");
+                    
+                    // 禁用之前激活的子物体
+                    DeactivateHidingChild();
+                    
                     TeleportBackToRememberedPosition();
                     isMovementDisabled = false;
                     Debug.Log("PlayerController: 已返回原位置，WASD移动已重新启用");
@@ -306,6 +334,84 @@ public class PlayerController : MonoBehaviour
     {
         List<string> adjacentInteractableItems = BlockManager.Instance.GetAdjacentInteractableItems(currentRow, currentColumn);
         return adjacentInteractableItems.Count > 0;
+    }
+    
+    /// <summary>
+    /// 获取最近的可交互物体的名称
+    /// </summary>
+    /// <param name="playerRow">玩家所在行</param>
+    /// <param name="playerColumn">玩家所在列</param>
+    /// <returns>最近的可交互物体名称，如果没有找到则返回空字符串</returns>
+    private string GetNearestInteractableItemName(int playerRow, int playerColumn)
+    {
+        List<string> adjacentInteractableItems = BlockManager.Instance.GetAdjacentInteractableItems(playerRow, playerColumn);
+        
+        if (adjacentInteractableItems.Count == 0)
+        {
+            return "";
+        }
+        
+        // 如果只有一个相邻的可交互物体，直接返回
+        if (adjacentInteractableItems.Count == 1)
+        {
+            return adjacentInteractableItems[0];
+        }
+        
+        // 如果有多个相邻的可交互物体，需要找到距离最近的那个
+        // 这里暂时返回第一个，如果需要更精确的距离计算，可以通过BlockManager进一步实现
+        return adjacentInteractableItems[0];
+    }
+    
+    /// <summary>
+    /// 获取最近的可交互物体的GameObject
+    /// </summary>
+    /// <param name="playerRow">玩家所在行</param>
+    /// <param name="playerColumn">玩家所在列</param>
+    /// <returns>最近的可交互物体GameObject，如果没有找到则返回null</returns>
+    private GameObject GetNearestInteractableGameObject(int playerRow, int playerColumn)
+    {
+        string nearestItemName = GetNearestInteractableItemName(playerRow, playerColumn);
+        
+        if (string.IsNullOrEmpty(nearestItemName))
+        {
+            return null;
+        }
+        
+        // 在场景中查找具有指定名称的所有GameObject
+        GameObject[] objectsWithName = GameObject.FindObjectsOfType<GameObject>();
+        GameObject nearestObject = null;
+        float minDistance = float.MaxValue;
+        
+        foreach (GameObject obj in objectsWithName)
+        {
+            // 检查GameObject名称是否包含目标名称（考虑可能有(Clone)等后缀）
+            if (obj.name.Contains(nearestItemName))
+            {
+                // 计算距离玩家的距离
+                float distance = Vector3.Distance(obj.transform.position, transform.position);
+                
+                if (distance < minDistance)
+                {
+                    minDistance = distance;
+                    nearestObject = obj;
+                }
+            }
+        }
+        
+        return nearestObject;
+    }
+    
+    /// <summary>
+    /// 禁用当前激活的躲藏子物体
+    /// </summary>
+    private void DeactivateHidingChild()
+    {
+        if (activatedChildTransform != null)
+        {
+            activatedChildTransform.gameObject.SetActive(false);
+            Debug.Log($"已禁用子物体: {activatedChildTransform.name}");
+            activatedChildTransform = null; // 清除引用
+        }
     }
     
     /// <summary>
@@ -1446,6 +1552,9 @@ public class PlayerController : MonoBehaviour
         rememberedColumn = -1;
         rememberedWorldPosition = Vector3.zero;
         HandleTips();
+        
+        // 禁用之前激活的子物体
+        DeactivateHidingChild();
         
         // 清除记忆时重新启用移动
         isMovementDisabled = false;
