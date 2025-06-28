@@ -1548,14 +1548,14 @@ PrefabInstance:
     - target: {fileID: 8891552689843735287, guid: c583ef51f383cd94fabe57a9ecddcff7, type: 3}
       propertyPath: backgroundMusic
       value: 
-      objectReference: {fileID: 8300000, guid: a5c61a992ba3d5d498d17749f2497000, type: 3}
+      objectReference: {fileID: 8300000, guid: a36e960446e522b4fa31842c92659295, type: 3}
     - target: {fileID: 8891552689843735287, guid: c583ef51f383cd94fabe57a9ecddcff7, type: 3}
       propertyPath: soundEffectSource
       value: 
       objectReference: {fileID: 1876281333}
     - target: {fileID: 8891552689843735287, guid: c583ef51f383cd94fabe57a9ecddcff7, type: 3}
       propertyPath: soundEffectClips.Array.size
-      value: 3
+      value: 5
       objectReference: {fileID: 0}
     - target: {fileID: 8891552689843735287, guid: c583ef51f383cd94fabe57a9ecddcff7, type: 3}
       propertyPath: soundEffectClips.Array.data[0].clip
@@ -1570,8 +1570,28 @@ PrefabInstance:
       value: 1
       objectReference: {fileID: 0}
     - target: {fileID: 8891552689843735287, guid: c583ef51f383cd94fabe57a9ecddcff7, type: 3}
+      propertyPath: soundEffectClips.Array.data[2].clip
+      value: 
+      objectReference: {fileID: 8300000, guid: 7ed44b39c5ccdb44a8004ca199909640, type: 3}
+    - target: {fileID: 8891552689843735287, guid: c583ef51f383cd94fabe57a9ecddcff7, type: 3}
       propertyPath: soundEffectClips.Array.data[2].type
       value: 2
+      objectReference: {fileID: 0}
+    - target: {fileID: 8891552689843735287, guid: c583ef51f383cd94fabe57a9ecddcff7, type: 3}
+      propertyPath: soundEffectClips.Array.data[3].clip
+      value: 
+      objectReference: {fileID: 8300000, guid: 6cb77624078fb78409cddc06f82b6ffd, type: 3}
+    - target: {fileID: 8891552689843735287, guid: c583ef51f383cd94fabe57a9ecddcff7, type: 3}
+      propertyPath: soundEffectClips.Array.data[3].type
+      value: 3
+      objectReference: {fileID: 0}
+    - target: {fileID: 8891552689843735287, guid: c583ef51f383cd94fabe57a9ecddcff7, type: 3}
+      propertyPath: soundEffectClips.Array.data[4].clip
+      value: 
+      objectReference: {fileID: 8300000, guid: 3e97e523eae8ad740b580c36a9994f99, type: 3}
+    - target: {fileID: 8891552689843735287, guid: c583ef51f383cd94fabe57a9ecddcff7, type: 3}
+      propertyPath: soundEffectClips.Array.data[4].type
+      value: 4
       objectReference: {fileID: 0}
     m_RemovedComponents: []
     m_RemovedGameObjects: []

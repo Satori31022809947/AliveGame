@@ -14,7 +14,9 @@ public enum SoundEffectType
     // 示例音效，可按需添加
     Footstep,
     Warning,
-    UIClick
+    UIClick,
+    GameWin,
+    GameOver
 }
 
 
