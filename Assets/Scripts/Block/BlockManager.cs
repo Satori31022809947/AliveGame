@@ -135,9 +135,8 @@ public class BlockManager : MonoBehaviour
             return instance;
         }
     }
-
-    // 所有地块数据
-    private Dictionary<int, BlockData> allBlocks = new Dictionary<int, BlockData>();
+    
+    List<GameObject> blocks = new List<GameObject>();
     
     // 矩阵配置
     [Header("矩阵配置")]
@@ -191,8 +190,6 @@ public class BlockManager : MonoBehaviour
     /// </summary>
     private void DiscoverAllBlocks()
     {
-        List<GameObject> blocks = new List<GameObject>();
-        
         // 方法1：优先查找当前GameObject的所有子物体
         if (transform.childCount > 0)
         {
@@ -213,28 +210,6 @@ public class BlockManager : MonoBehaviour
             Debug.Log($"BlockManager: 从子物体中发现了 {blocks.Count} 个地块");
         }
         
-        // 方法2：如果没有子物体，通过标签查找
-        if (blocks.Count == 0)
-        {
-            GameObject[] taggedBlocks = GameObject.FindGameObjectsWithTag("Block");
-            blocks.AddRange(taggedBlocks);
-            Debug.Log($"BlockManager: 通过标签发现了 {taggedBlocks.Length} 个地块");
-        }
-        
-        // 方法3：如果前两种方法都没找到，全局名称搜索
-        if (blocks.Count == 0)
-        {
-            Transform[] allTransforms = FindObjectsOfType<Transform>();
-            
-            foreach (Transform t in allTransforms)
-            {
-                if (t.name.Contains("Block") || t.name.Contains("Plane") || t.name.Contains("block") || t.name.Contains("plane"))
-                {
-                    blocks.Add(t.gameObject);
-                }
-            }
-            Debug.Log($"BlockManager: 通过全局搜索发现了 {blocks.Count} 个地块");
-        }
 
         // 按矩阵顺序注册地块
         int expectedBlockCount = rows * columns;
@@ -255,24 +230,6 @@ public class BlockManager : MonoBehaviour
 
         Debug.Log($"BlockManager: 总共发现并注册了 {blocks.Count} 个地块到 {rows}×{columns} 矩阵中");
     }
-
-    /// <summary>
-    /// 注册一个地块
-    /// </summary>
-    public void RegisterBlock(int blockId, Transform blockTransform, BlockType blockType = BlockType.Normal)
-    {
-        if (!allBlocks.ContainsKey(blockId))
-        {
-            BlockData newBlock = new BlockData(blockId, blockTransform.position, blockType, blockTransform);
-            allBlocks[blockId] = newBlock;
-            
-            // 为前几个地块自动添加到玩家移动目标列表
-            if (playerMoveTargets.Count < 4)
-            {
-                playerMoveTargets.Add(blockId);
-            }
-        }
-    }
     
     /// <summary>
     /// 注册地块到矩阵系统
@@ -282,7 +239,7 @@ public class BlockManager : MonoBehaviour
         if (IsValidPosition(row, col))
         {
             BlockData newBlock = new BlockData(blockId, blockTransform.position, blockType, blockTransform, row, col);
-            allBlocks[blockId] = newBlock;
+            blocks[blockId].GetComponent<BlockController>().blockData = newBlock;
             blockMatrix[row, col] = newBlock;
         }
     }
@@ -290,18 +247,18 @@ public class BlockManager : MonoBehaviour
     /// <summary>
     /// 获取指定ID的地块数据
     /// </summary>
-    public BlockData GetBlock(int blockId)
-    {
-        return allBlocks.ContainsKey(blockId) ? allBlocks[blockId] : null;
-    }
+    // public BlockData GetBlock(int blockId)
+    // {
+    //     return allBlocks.ContainsKey(blockId) ? allBlocks[blockId] : null;
+    // }
 
     /// <summary>
     /// 获取所有地块数据
     /// </summary>
-    public Dictionary<int, BlockData> GetAllBlocks()
-    {
-        return allBlocks;
-    }
+    // public Dictionary<int, BlockData> GetAllBlocks()
+    // {
+    //     return allBlocks;
+    // }
 
     /// <summary>
     /// 获取玩家移动目标地块列表
@@ -322,32 +279,32 @@ public class BlockManager : MonoBehaviour
     /// <summary>
     /// 按子物体顺序自动设置玩家移动目标（便利方法）
     /// </summary>
-    public void SetPlayerMoveTargetsFromChildren()
-    {
-        playerMoveTargets.Clear();
-        
-        // 按子物体的顺序添加到移动目标
-        for (int i = 0; i < transform.childCount && i < 4; i++)
-        {
-            if (allBlocks.ContainsKey(i))
-            {
-                playerMoveTargets.Add(i);
-            }
-        }
-        
-        Debug.Log($"BlockManager: 自动设置了 {playerMoveTargets.Count} 个玩家移动目标");
-    }
+    // public void SetPlayerMoveTargetsFromChildren()
+    // {
+    //     playerMoveTargets.Clear();
+    //     
+    //     // 按子物体的顺序添加到移动目标
+    //     for (int i = 0; i < transform.childCount && i < 4; i++)
+    //     {
+    //         if (allBlocks.ContainsKey(i))
+    //         {
+    //             playerMoveTargets.Add(i);
+    //         }
+    //     }
+    //     
+    //     Debug.Log($"BlockManager: 自动设置了 {playerMoveTargets.Count} 个玩家移动目标");
+    // }
 
     /// <summary>
     /// 重新扫描子物体地块（在运行时添加/删除地块后调用）
     /// </summary>
-    public void RefreshBlocks()
-    {
-        allBlocks.Clear();
-        playerMoveTargets.Clear();
-        InitializeMatrix();
-        DiscoverAllBlocks();
-    }
+    // public void RefreshBlocks()
+    // {
+    //     allBlocks.Clear();
+    //     playerMoveTargets.Clear();
+    //     InitializeMatrix();
+    //     DiscoverAllBlocks();
+    // }
     
     /// <summary>
     /// 检查坐标是否在矩阵范围内
@@ -669,12 +626,12 @@ public class BlockManager : MonoBehaviour
     /// </summary>
     public bool CollectItemFromBlock(int blockId)
     {
-        if (!allBlocks.ContainsKey(blockId))
+        if (blocks.Count <= blockId)
         {
             return false;
         }
         
-        BlockData block = allBlocks[blockId];
+        BlockData block = blocks[blockId].GetComponent<BlockController>().blockData;
         
         if (!block.hasItem || block.isItemCollected)
         {
@@ -757,13 +714,15 @@ public class BlockManager : MonoBehaviour
     private List<BlockData> FindBlocksByItemName(string itemName)
     {
         List<BlockData> result = new List<BlockData>();
+
         
-        foreach (var block in allBlocks.Values)
+        foreach (var block in blocks)
         {
-            if (block.hasItem && 
-                (block.itemName == itemName || block.linkedItemName == itemName))
+            BlockData blockData = block.GetComponent<BlockController>().blockData;
+            if (blockData.hasItem && 
+                (blockData.itemName == itemName || blockData.linkedItemName == itemName))
             {
-                result.Add(block);
+                result.Add(blockData);
             }
         }
         
@@ -773,79 +732,79 @@ public class BlockManager : MonoBehaviour
     /// <summary>
     /// 根据位置查找最近的地块
     /// </summary>
-    public BlockData FindNearestBlock(Vector3 position)
-    {
-        BlockData nearest = null;
-        float minDistance = float.MaxValue;
-
-        foreach (var block in allBlocks.Values)
-        {
-            float distance = Vector3.Distance(position, block.position);
-            if (distance < minDistance)
-            {
-                minDistance = distance;
-                nearest = block;
-            }
-        }
-
-        return nearest;
-    }
+    // public BlockData FindNearestBlock(Vector3 position)
+    // {
+    //     BlockData nearest = null;
+    //     float minDistance = float.MaxValue;
+    //
+    //     foreach (var block in allBlocks.Values)
+    //     {
+    //         float distance = Vector3.Distance(position, block.position);
+    //         if (distance < minDistance)
+    //         {
+    //             minDistance = distance;
+    //             nearest = block;
+    //         }
+    //     }
+    //
+    //     return nearest;
+    // }
 
     /// <summary>
     /// 获取指定类型的所有地块
     /// </summary>
-    public List<BlockData> GetBlocksByType(BlockType blockType)
-    {
-        List<BlockData> result = new List<BlockData>();
-        foreach (var block in allBlocks.Values)
-        {
-            if (block.blockType == blockType)
-            {
-                result.Add(block);
-            }
-        }
-        return result;
-    }
+    // public List<BlockData> GetBlocksByType(BlockType blockType)
+    // {
+    //     List<BlockData> result = new List<BlockData>();
+    //     foreach (var block in allBlocks.Values)
+    //     {
+    //         if (block.blockType == blockType)
+    //         {
+    //             result.Add(block);
+    //         }
+    //     }
+    //     return result;
+    // }
 
     // Unity编辑器中的调试显示
-    void OnDrawGizmos()
-    {
-        if (!showDebugInfo || allBlocks == null) return;
-
-        foreach (var block in allBlocks.Values)
-        {
-            // 根据地块类型设置不同颜色
-            switch (block.blockType)
-            {
-                case BlockType.Normal:
-                    Gizmos.color = Color.white;
-                    break;
-                case BlockType.Speed:
-                    Gizmos.color = Color.green;
-                    break;
-                case BlockType.Slow:
-                    Gizmos.color = Color.yellow;
-                    break;
-                case BlockType.Teleport:
-                    Gizmos.color = Color.blue;
-                    break;
-                case BlockType.Obstacle:
-                    Gizmos.color = Color.red;
-                    break;
-            }
-
-            // 绘制地块位置
-            Gizmos.DrawWireCube(block.position, Vector3.one * 0.5f);
-        }
-
-        // 高亮显示玩家移动目标
-        Gizmos.color = Color.magenta;
-        foreach (int targetId in playerMoveTargets)
-        {
-            if (allBlocks.ContainsKey(targetId))
-            {
-                Gizmos.DrawWireSphere(allBlocks[targetId].position + Vector3.up, 0.8f);
-            }
-        }
-    }
+    // void OnDrawGizmos()
+    // {
+    //     if (!showDebugInfo || allBlocks == null) return;
+    //
+    //     foreach (var block in allBlocks.Values)
+    //     {
+    //         // 根据地块类型设置不同颜色
+    //         switch (block.blockType)
+    //         {
+    //             case BlockType.Normal:
+    //                 Gizmos.color = Color.white;
+    //                 break;
+    //             case BlockType.Speed:
+    //                 Gizmos.color = Color.green;
+    //                 break;
+    //             case BlockType.Slow:
+    //                 Gizmos.color = Color.yellow;
+    //                 break;
+    //             case BlockType.Teleport:
+    //                 Gizmos.color = Color.blue;
+    //                 break;
+    //             case BlockType.Obstacle:
+    //                 Gizmos.color = Color.red;
+    //                 break;
+    //         }
+    //
+    //         // 绘制地块位置
+    //         Gizmos.DrawWireCube(block.position, Vector3.one * 0.5f);
+    //     }
+    //
+    //     // 高亮显示玩家移动目标
+    //     Gizmos.color = Color.magenta;
+    //     foreach (int targetId in playerMoveTargets)
+    //     {
+    //         if (allBlocks.ContainsKey(targetId))
+    //         {
+    //             Gizmos.DrawWireSphere(allBlocks[targetId].position + Vector3.up, 0.8f);
+    //         }
+    //     }
+    // }
 }
