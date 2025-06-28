@@ -21,12 +21,13 @@ public class NoiseControlMgr : MonoBehaviour
         }
     }
 
-    [SerializeField] private int noiseValue = 0; // 当前噪声值
-    [SerializeField] private int noiseThreshold = 100; // 噪声阈值
-    [SerializeField] private int noiseAddValue = 100; // 噪声阈值
-    [SerializeField] private int noiseDecreaseSpeed = 5; // 噪声下降速度
+    [SerializeField] public int noiseValue = 0; // 当前噪声值
+    [SerializeField] public int noiseThreshold = 100; // 噪声阈值
+    [SerializeField] public int noiseAddValue = 100; // 噪声阈值
+    [SerializeField] public int noiseDecreaseSpeed = 5; // 噪声下降速度
 
     public Action OnNoiseThresholdReached; // 噪声达到阈值时触发的事件
+    public Action OnNoiseChanged; // 噪声值改变时触发的事件
 
     private void Awake()
     {
@@ -56,6 +57,8 @@ public class NoiseControlMgr : MonoBehaviour
             {
                 noiseValue = 0;
             }
+            
+            OnNoiseChanged?.Invoke();
         }
     }
     
@@ -73,20 +76,8 @@ public class NoiseControlMgr : MonoBehaviour
         else if (noiseValue <= 0)
         {
             noiseValue = 0;
+            OnNoiseChanged?.Invoke();
         }
-
-        if (noiseValue > 0)
-        {
-            Debug.Log($"NoiseValue: {noiseValue}");
-        }
-    }
-
-    /// <summary>
-    /// 获取当前噪声值
-    /// </summary>
-    /// <returns>当前噪声值</returns>
-    public float GetCurrentNoiseValue()
-    {
-        return noiseValue;
+        OnNoiseChanged?.Invoke();
     }
 }
