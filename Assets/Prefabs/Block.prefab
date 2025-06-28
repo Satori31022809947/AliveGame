@@ -62,7 +62,7 @@ MeshRenderer:
   m_RenderingLayerMask: 1
   m_RendererPriority: 0
   m_Materials:
-  - {fileID: 10303, guid: 0000000000000000f000000000000000, type: 0}
+  - {fileID: 2100000, guid: 8f7520401024c45a4bcdff8f91b35bb0, type: 2}
   m_StaticBatchInfo:
     firstSubMesh: 0
     subMeshCount: 0
@@ -151,3 +151,21 @@ MonoBehaviour:
   m_Script: {fileID: 11500000, guid: 2ef73480baf484b8ca609873c738dbf2, type: 3}
   m_Name: 
   m_EditorClassIdentifier: 
+  blockData:
+    blockId: 0
+    position: {x: 0, y: 0, z: 0}
+    blockType: 0
+    blockTransform: {fileID: 0}
+    isWalkable: 0
+    isDangerous: 0
+    movementSpeed: 0
+    blockName: 
+    row: 0
+    column: 0
+    interactionType: 0
+    hasItem: 0
+    isItemCollected: 0
+    itemName: 
+    itemInstance: {fileID: 0}
+    itemOffset: {x: 0, y: 0, z: 0}
+    linkedItemName: 
