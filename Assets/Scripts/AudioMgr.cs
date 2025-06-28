@@ -72,7 +72,5 @@ public class AudioMgr : MonoBehaviour
         {
             soundEffectSource.PlayOneShot(clipDictionary[type]);
         }
-
-
     }
 }
