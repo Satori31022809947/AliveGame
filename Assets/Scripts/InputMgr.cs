@@ -157,21 +157,25 @@ public class InputMgr : MonoBehaviour
             case InputType.Up:
                 OnMoveUp?.Invoke();
                 Debug.Log("InputMgr: 检测到向上移动输入 (W键)");
+                AudioMgr.Instance.PlaySoundEffect(SoundEffectType.Footstep);
                 break;
                 
             case InputType.Down:
                 OnMoveDown?.Invoke();
                 Debug.Log("InputMgr: 检测到向下移动输入 (S键)");
+                AudioMgr.Instance.PlaySoundEffect(SoundEffectType.Footstep);
                 break;
                 
             case InputType.Left:
                 OnMoveLeft?.Invoke();
                 Debug.Log("InputMgr: 检测到向左移动输入 (A键)");
+                AudioMgr.Instance.PlaySoundEffect(SoundEffectType.Footstep);
                 break;
                 
             case InputType.Right:
                 OnMoveRight?.Invoke();
                 Debug.Log("InputMgr: 检测到向右移动输入 (D键)");
+                AudioMgr.Instance.PlaySoundEffect(SoundEffectType.Footstep);
                 break;
                 
             case InputType.Interact:

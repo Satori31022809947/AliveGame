@@ -12,9 +12,9 @@ public class SoundEffectClipPair
 public enum SoundEffectType
 {
     // 示例音效，可按需添加
-    Jump,
-    Attack,
-    Collect
+    Footstep,
+    Warning,
+    UIClick
 }
 
 
@@ -72,5 +72,7 @@ public class AudioMgr : MonoBehaviour
         {
             soundEffectSource.PlayOneShot(clipDictionary[type]);
         }
+
+
     }
 }

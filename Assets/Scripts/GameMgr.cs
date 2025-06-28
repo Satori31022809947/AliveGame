@@ -53,7 +53,7 @@ public class GameMgr : MonoBehaviour
     {
     }
 
-    [SerializeField] private int enableDelayTime = 3000; // 启用延迟时间（毫秒）
+    [SerializeField] private int enableDelayTime = 5; // 启用延迟时间（毫秒）
     [SerializeField] public int BeatLimit = 200;       // 要在多少拍内逃脱
 
     public Action OnGameStart;
