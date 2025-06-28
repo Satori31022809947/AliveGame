@@ -38,6 +38,26 @@
     }
   ],
   "portalConfigs": [
+      {
+          "start":{
+              "row":8,
+              "col":3
+          },
+          "end":{
+              "row":7,
+              "col":5
+          }
+      },
+      {
+          "start":{
+              "row":2,
+              "col":10
+          },
+          "end":{
+              "row":0,
+              "col":14
+          }
+      }
     
   ]
 }
