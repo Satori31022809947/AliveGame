@@ -44,6 +44,7 @@ public class BeatMgr : MonoBehaviour
     private bool m_enable = false;  // 默认禁用
     [SerializeField] private int bpm = 108;
     [SerializeField] private long startTime = 0;         // 节拍开始初始时间 (毫秒)
+    [SerializeField] private long baseTime = 0;         // 节拍开始初始时间 (毫秒)
     [SerializeField] private BeatUI beatUI;             // 节拍器UI
     [SerializeField] private string beatConfigPath = "BeatConfig.json";
     private List<BeatSequenceItem> BeatSequence = new List<BeatSequenceItem>();
@@ -102,7 +103,7 @@ public class BeatMgr : MonoBehaviour
 
     public void SetBeatStartTime(long time)
     {
-        startTime = time;
+        startTime = time + baseTime;
         beatIndex = 0;
         beatUI.UpdateBeatUI(beatIndex, BeatType.None);
         Enable();
@@ -112,24 +113,32 @@ public class BeatMgr : MonoBehaviour
     {
         // 每拍调用的函数，内容留空，可按需实现
         Debug.Log("BeatMgr: OnBeat");
+        // 一拍结束时候的处理
+        NoiseControlMgr.Instance.OnBeatFinish(GetBeatType(beatIndex));
         beatIndex++;
-        BeatType beatType = BeatType.None;
-        if (BeatMap.ContainsKey(beatIndex))
+        // 一拍开始时候的处理
+        BeatType beatType = GetBeatType(beatIndex);
+        switch (beatType)
         {
-            beatType = BeatMap[beatIndex];
-            switch (BeatMap[beatIndex])
-            {
-                case BeatType.Dangerous:
-                    Debug.Log("BeatMgr: OnBeat: Dangerous");
-                    break;
-                case BeatType.Warning:
-                    Debug.Log("BeatMgr: OnBeat: Warning");
-                    break;
-            }   
-        }
+            case BeatType.Dangerous:
+                Debug.Log("BeatMgr: OnBeat: Dangerous");
+                break;
+            case BeatType.Warning:
+                Debug.Log("BeatMgr: OnBeat: Warning");
+                break;
+        }   
         beatUI.UpdateBeatUI(beatIndex, beatType);
     }
 
+    public BeatType GetBeatType(int beatIndex)
+    {
+        if (BeatMap.ContainsKey(beatIndex))
+        {
+            return BeatMap[beatIndex];
+        }
+        return BeatType.None;
+    }
+    
     public void SetBPM(int newBpm)
     {
         bpm = newBpm;
