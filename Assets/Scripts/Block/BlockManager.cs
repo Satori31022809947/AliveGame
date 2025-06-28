@@ -811,7 +811,7 @@ public class BlockManager : MonoBehaviour
                 continue;
             }
             
-            int row = coord.row;
+            int row = 8 - coord.row; //tempfix：临时翻转
             int col = coord.col;
             
             
