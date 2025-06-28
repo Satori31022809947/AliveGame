@@ -62,6 +62,12 @@ public class PlayerController : MonoBehaviour
     [SerializeField] private Texture2D hairWithEye;
     [SerializeField] private Texture2D eyeNoHair;
     
+    // 传送时的缩放参数
+    [Header("传送效果")]
+    [SerializeField] private float teleportShrinkFactor = 0.1f; // 传送时缩小的比例
+    [SerializeField] private float teleportAnimationTime = 0.2f; // 传送动画的时间
+
+
     void Start()
     {
         // 保存原始缩放值
@@ -326,11 +332,13 @@ public class PlayerController : MonoBehaviour
     {
         isMoving = true;
         
+        // 先更新当前坐标和地块
+        currentRow = targetBlock.row;
+        currentColumn = targetBlock.column;
+        currentBlock = targetBlock;
+        
         Vector3 startPosition = transform.position;
-        Vector3 targetPosition = targetBlock.position;
-        // 设置Y坐标稍微高一点，避免嵌入地块
-        targetPosition.y += 4.15f;
-        targetPosition.z += 3.79f;
+        Vector3 targetPosition = GetFinalPosition(currentBlock);
         
         // 记录基础Y坐标（用于跳跃计算）
         float startY = startPosition.y;
@@ -386,19 +394,28 @@ public class PlayerController : MonoBehaviour
             yield return null;
         }
         
-        // 确保最终位置准确
-        transform.position = targetPosition;
+        // 处理传送门
+        BlockData portalEnd;
+        if (BlockManager.Instance.TryGetPortalEnd(currentBlock.blockId, out portalEnd))
+        {
+            BlockData portalEndBlock = BlockManager.Instance.GetBlockAt(portalEnd.row, portalEnd.column);
+            if (portalEndBlock != null)
+            {
+                yield return StartCoroutine(HandleTeleportation(portalEndBlock));
+            }
+        }
+        else
+        {
+            // 确保最终位置准确
+            transform.position = targetPosition;
+        }
+        
         
         // 确保缩放恢复到原始值
         if (enableSquashStretch)
         {
             transform.localScale = originalScale;
         }
-        
-        // 更新当前坐标和地块
-        currentRow = targetBlock.row;
-        currentColumn = targetBlock.column;
-        currentBlock = targetBlock;
         
         // 处理特殊地块效果
         HandleBlockEffect(targetBlock);
@@ -409,6 +426,50 @@ public class PlayerController : MonoBehaviour
         isMoving = false;
         
         Debug.Log($"玩家到达矩阵位置: ({currentRow}, {currentColumn}) - {targetBlock.blockName} (类型: {targetBlock.blockType})");
+    }
+
+    /// <summary>
+    /// 处理传送逻辑，包含缩放动画
+    /// </summary>
+    /// <param name="targetBlock">传送目标地块</param>
+    private IEnumerator HandleTeleportation(BlockData targetBlock)
+    {
+        // 变小动画
+        float elapsedTime = 0f;
+        while (elapsedTime < teleportAnimationTime)
+        {
+            elapsedTime += Time.deltaTime;
+            float progress = Mathf.Clamp01(elapsedTime / teleportAnimationTime);
+            Vector3 newScale = Vector3.Lerp(originalScale, originalScale * teleportShrinkFactor, progress);
+            transform.localScale = newScale;
+            yield return null;
+        }
+
+        // 换位置
+        currentRow = targetBlock.row;
+        currentColumn = targetBlock.column;
+        currentBlock = targetBlock;
+        transform.position = GetFinalPosition(currentBlock);
+
+        // 变大动画
+        elapsedTime = 0f;
+        while (elapsedTime < teleportAnimationTime)
+        {
+            elapsedTime += Time.deltaTime;
+            float progress = Mathf.Clamp01(elapsedTime / teleportAnimationTime);
+            Vector3 newScale = Vector3.Lerp(originalScale * teleportShrinkFactor, originalScale, progress);
+            transform.localScale = newScale;
+            yield return null;
+        }
+    }
+
+    private Vector3 GetFinalPosition(BlockData block)
+    {
+        Vector3 targetPosition = block.position;
+        // 设置Y坐标稍微高一点，避免嵌入地块
+        targetPosition.y += 4.15f;
+        targetPosition.z += 3.79f;
+        return targetPosition;
     }
     
     /// <summary>

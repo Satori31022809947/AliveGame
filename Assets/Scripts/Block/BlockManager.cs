@@ -99,6 +99,16 @@ public class CoordinateData
 }
 
 /// <summary>
+/// 传送门配置数据结构
+/// </summary>
+[System.Serializable]
+public class PortalConfig
+{
+    public CoordinateData start;
+    public CoordinateData end;
+}
+
+/// <summary>
 /// 道具配置数据结构（用于JSON反序列化）
 /// </summary>
 [System.Serializable]
@@ -139,6 +149,7 @@ public class BlockConfig
 public class BlockConfigFile
 {
     public BlockConfig[] blockConfigs;
+    public PortalConfig[] portalConfigs;
 }
 
 /// <summary>
@@ -193,6 +204,9 @@ public class BlockManager : MonoBehaviour
     
     // 地块配置数据
     private Dictionary<string, BlockConfig> blockConfigs = new Dictionary<string, BlockConfig>();
+    
+    // 传送门配置数据
+    private Dictionary<int, CoordinateData> portalMap = new Dictionary<int, CoordinateData>();
 
     void Awake()
     {
@@ -206,6 +220,38 @@ public class BlockManager : MonoBehaviour
         {
             Destroy(gameObject);
         }
+    }
+
+    // 初始化传送门配置
+    private void InitPortalConfigs(PortalConfig[] portalConfigs)
+    {
+        portalMap.Clear();
+        foreach (var portal in portalConfigs)
+        {
+            portal.start.row = 8 - portal.start.row;
+            portal.end.row = 8 - portal.end.row;
+            int blockId = portal.start.row * columns + portal.start.col;
+            portalMap[blockId] = portal.end;
+        }
+    }
+
+    /// <summary>
+    /// 查询某个block是否是传送门的起点，并返回对应的终点
+    /// </summary>
+    /// <param name="row">行坐标</param>
+    /// <param name="col">列坐标</param>
+    /// <param name="endPos">传送终点坐标</param>
+    /// <returns>是否是传送门起点</returns>
+    public bool TryGetPortalEnd(int blockId, out BlockData block)
+    {
+        CoordinateData coordinate;
+        block = null;
+        if (portalMap.TryGetValue(blockId, out coordinate))
+        {
+            block = blockMatrix[coordinate.row, coordinate.col];
+            return true;
+        }
+        return false;
     }
 
     void Start()
@@ -660,6 +706,15 @@ public class BlockManager : MonoBehaviour
                     
                     Debug.Log($"BlockManager: 加载地块配置 ({blockConfig.row},{blockConfig.column}) - 危险: {blockConfig.isDangerous}");
                 }
+                
+                if (configFile.portalConfigs == null)
+                {
+                    Debug.LogError("BlockManager: portalConfigs数组为null");
+                    return;
+                }
+                
+                portalMap.Clear();
+                InitPortalConfigs(configFile.portalConfigs);
             }
             catch (System.Exception e)
             {
