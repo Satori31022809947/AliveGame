@@ -57,6 +57,13 @@
       "interactionType": "Other"
     },
     {
+      "itemName": "Box",
+      "coordinates": [
+        {"row": 2, "col": 15}
+      ],
+      "interactionType": "Other"
+    },
+    {
       "itemName": "FishTank",
       "coordinates": [
         {"row": 5, "col": 12}
