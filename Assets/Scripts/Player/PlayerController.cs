@@ -26,6 +26,9 @@ public class PlayerController : MonoBehaviour
     [SerializeField] private AudioClip pickupSound;
     [SerializeField] private GameObject pickupEffectPrefab;
     
+    //是否开始判断危险
+    public bool detectDangerous = false;
+    
     void Start()
     {
         // 订阅输入事件
@@ -37,8 +40,14 @@ public class PlayerController : MonoBehaviour
 
     void Update()
     {
-        // 不再在Update中检测输入，改为使用事件系统
-        // 输入检测现在由InputMgr处理
+        //检测危险
+        if (detectDangerous)
+        {
+            if (currentBlock.isDangerous)
+            {
+                Debug.Log("player in dangerous!!!");
+            }
+        }
     }
     
     /// <summary>

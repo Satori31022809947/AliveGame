@@ -14,6 +14,8 @@ public class BlockData
     public BlockType blockType;            // 地块类型
     public Transform blockTransform;       // 地块的Transform引用
     public bool isWalkable = true;         // 是否可行走
+    //TODO: 初始化时不要覆盖dangerous设定
+    public bool isDangerous = true;       //是否危险
     public float movementSpeed = 1f;       // 移动速度修正
     public string blockName;               // 地块名称
     
@@ -239,6 +241,7 @@ public class BlockManager : MonoBehaviour
         if (IsValidPosition(row, col))
         {
             BlockData newBlock = new BlockData(blockId, blockTransform.position, blockType, blockTransform, row, col);
+
             blocks[blockId].GetComponent<BlockController>().blockData = newBlock;
             blockMatrix[row, col] = newBlock;
         }
@@ -247,10 +250,11 @@ public class BlockManager : MonoBehaviour
     /// <summary>
     /// 获取指定ID的地块数据
     /// </summary>
-    // public BlockData GetBlock(int blockId)
-    // {
-    //     return allBlocks.ContainsKey(blockId) ? allBlocks[blockId] : null;
-    // }
+    public BlockData GetBlock(int blockId)
+    {
+        if (blocks.Count <= blockId) return null;
+        return blocks[blockId].GetComponent<BlockController>().blockData;
+    }
 
     /// <summary>
     /// 获取所有地块数据

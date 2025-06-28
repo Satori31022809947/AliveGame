@@ -296,6 +296,17 @@ PrefabInstance:
     m_AddedGameObjects: []
     m_AddedComponents: []
   m_SourcePrefab: {fileID: 100100000, guid: 96a8ed3e8d6d14487b3e5de875bb7ffa, type: 3}
+--- !u!114 &187336907 stripped
+MonoBehaviour:
+  m_CorrespondingSourceObject: {fileID: 6053746084808061819, guid: 96a8ed3e8d6d14487b3e5de875bb7ffa, type: 3}
+  m_PrefabInstance: {fileID: 187336906}
+  m_PrefabAsset: {fileID: 0}
+  m_GameObject: {fileID: 0}
+  m_Enabled: 1
+  m_EditorHideFlags: 0
+  m_Script: {fileID: 11500000, guid: 66105d5363dea4b2d900f8910063dea8, type: 3}
+  m_Name: 
+  m_EditorClassIdentifier: 
 --- !u!1001 &460834139
 PrefabInstance:
   m_ObjectHideFlags: 0
@@ -498,6 +509,7 @@ MonoBehaviour:
   m_EditorClassIdentifier: 
   startGameButton: {fileID: 110819556}
   StartGamePage: {fileID: 1347488807}
+  enableDelayTime: 3000
 --- !u!4 &662386541
 Transform:
   m_ObjectHideFlags: 0
@@ -1112,6 +1124,8 @@ MonoBehaviour:
   m_Script: {fileID: 11500000, guid: fe8ebf6b83deda944a87d3d00fcc38c5, type: 3}
   m_Name: 
   m_EditorClassIdentifier: 
+  leftEps: 200
+  rightEps: 200
 --- !u!4 &2052828294
 Transform:
   m_ObjectHideFlags: 0
@@ -1434,6 +1448,10 @@ PrefabInstance:
       propertyPath: beatUI
       value: 
       objectReference: {fileID: 969185251}
+    - target: {fileID: 8790565334064949450, guid: b061f3fc18ef09d469059b8571a4fe5b, type: 3}
+      propertyPath: playerController
+      value: 
+      objectReference: {fileID: 187336907}
     m_RemovedComponents: []
     m_RemovedGameObjects: []
     m_AddedGameObjects: []

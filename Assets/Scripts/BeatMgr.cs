@@ -47,6 +47,8 @@ public class BeatMgr : MonoBehaviour
     [SerializeField] private long baseTime = 0;         // 节拍开始初始时间 (毫秒)
     [SerializeField] private BeatUI beatUI;             // 节拍器UI
     [SerializeField] private string beatConfigPath = "BeatConfig.json";
+    [SerializeField] private PlayerController playerController;
+
     private List<BeatSequenceItem> BeatSequence = new List<BeatSequenceItem>();
     private Dictionary<int, BeatType> BeatMap =  new Dictionary<int, BeatType>();
 
@@ -122,9 +124,13 @@ public class BeatMgr : MonoBehaviour
         {
             case BeatType.Dangerous:
                 Debug.Log("BeatMgr: OnBeat: Dangerous");
+                playerController.detectDangerous = true;
                 break;
             case BeatType.Warning:
                 Debug.Log("BeatMgr: OnBeat: Warning");
+                break;
+            case BeatType.None:
+                playerController.detectDangerous = false;
                 break;
         }   
         beatUI.UpdateBeatUI(beatIndex, beatType);
