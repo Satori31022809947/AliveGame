@@ -4,6 +4,11 @@ using UnityEngine;
 
 public class PlayerController : MonoBehaviour
 {
+    // 初始位置设置
+    [Header("初始位置")]
+    [SerializeField] private int initialRow = 8;
+    [SerializeField] private int initialColumn = 2;
+    
     // 当前所在的矩阵坐标
     private int currentRow = 0;
     private int currentColumn = 0;
@@ -166,15 +171,17 @@ public class PlayerController : MonoBehaviour
     }
     
     /// <summary>
-    /// 初始化玩家位置到矩阵的(0,0)位置
+    /// 初始化玩家位置到指定矩阵位置
     /// </summary>
     private IEnumerator InitializePlayerPosition()
     {
         // 等待一帧确保BlockManager已经发现所有地块
         yield return null;
         
-        // 将玩家设置到矩阵的(0,0)位置
-        SetPlayerToMatrixPosition(0, 0);
+        // 将玩家设置到配置的初始位置
+        SetPlayerToMatrixPosition(initialRow, initialColumn);
+        
+        Debug.Log($"PlayerController: 玩家初始位置设置为 ({initialRow}, {initialColumn})");
     }
     
     /// <summary>
@@ -213,10 +220,38 @@ public class PlayerController : MonoBehaviour
     /// <param name="col">目标列</param>
     private void SetPlayerToMatrixPosition(int row, int col)
     {
+        // 检查BlockManager是否存在
+        if (BlockManager.Instance == null)
+        {
+            Debug.LogError($"PlayerController: BlockManager不存在，无法设置玩家到位置 ({row}, {col})");
+            return;
+        }
+        
         BlockData targetBlock = BlockManager.Instance.GetBlockAt(row, col);
         
         if (targetBlock != null)
         {
+            // 检查地块是否可行走
+            if (!targetBlock.isWalkable)
+            {
+                Debug.LogWarning($"PlayerController: 位置 ({row}, {col}) 的地块不可行走！尝试寻找附近可行走的地块...");
+                
+                // 尝试寻找附近的可行走地块
+                BlockData walkableBlock = FindNearbyWalkableBlock(row, col);
+                if (walkableBlock != null)
+                {
+                    targetBlock = walkableBlock;
+                    row = walkableBlock.row;
+                    col = walkableBlock.column;
+                    Debug.Log($"PlayerController: 找到附近可行走地块 ({row}, {col})");
+                }
+                else
+                {
+                    Debug.LogError($"PlayerController: 位置 ({row}, {col}) 附近没有找到可行走的地块！");
+                    return;
+                }
+            }
+            
             currentRow = row;
             currentColumn = col;
             currentBlock = targetBlock;
@@ -231,8 +266,41 @@ public class PlayerController : MonoBehaviour
         }
         else
         {
-            Debug.LogWarning($"PlayerController: 矩阵位置 ({row}, {col}) 没有找到地块！");
+            Debug.LogError($"PlayerController: 矩阵位置 ({row}, {col}) 没有找到地块！请检查坐标是否正确。");
         }
+    }
+    
+    /// <summary>
+    /// 寻找指定位置附近的可行走地块
+    /// </summary>
+    /// <param name="centerRow">中心行</param>
+    /// <param name="centerCol">中心列</param>
+    /// <returns>找到的可行走地块，如果没找到则返回null</returns>
+    private BlockData FindNearbyWalkableBlock(int centerRow, int centerCol)
+    {
+        // 搜索半径
+        int searchRadius = 3;
+        
+        for (int radius = 1; radius <= searchRadius; radius++)
+        {
+            for (int row = centerRow - radius; row <= centerRow + radius; row++)
+            {
+                for (int col = centerCol - radius; col <= centerCol + radius; col++)
+                {
+                    // 只检查当前半径边界上的点
+                    if (Mathf.Abs(row - centerRow) == radius || Mathf.Abs(col - centerCol) == radius)
+                    {
+                        BlockData block = BlockManager.Instance.GetBlockAt(row, col);
+                        if (block != null && block.isWalkable)
+                        {
+                            return block;
+                        }
+                    }
+                }
+            }
+        }
+        
+        return null;
     }
     
     /// <summary>
@@ -805,6 +873,38 @@ public class PlayerController : MonoBehaviour
     public (bool enabled, float amount) GetSquashStretchSettings()
     {
         return (enableSquashStretch, squashAmount);
+    }
+    
+    /// <summary>
+    /// 设置初始位置（下次游戏开始时生效）
+    /// </summary>
+    /// <param name="row">初始行位置</param>
+    /// <param name="column">初始列位置</param>
+    public void SetInitialPosition(int row, int column)
+    {
+        initialRow = row;
+        initialColumn = column;
+        Debug.Log($"PlayerController: 初始位置已设置为 ({row}, {column})，下次游戏开始时生效");
+    }
+    
+    /// <summary>
+    /// 获取当前设置的初始位置
+    /// </summary>
+    /// <returns>初始位置的行和列</returns>
+    public (int row, int column) GetInitialPosition()
+    {
+        return (initialRow, initialColumn);
+    }
+    
+    /// <summary>
+    /// 重新初始化玩家到初始位置（立即生效）
+    /// </summary>
+    public void ResetToInitialPosition()
+    {
+        if (isMoving) return; // 如果正在移动中，忽略
+        
+        SetPlayerToMatrixPosition(initialRow, initialColumn);
+        Debug.Log($"PlayerController: 玩家已重置到初始位置 ({initialRow}, {initialColumn})");
     }
     
     void OnDestroy()
