@@ -5,6 +5,7 @@ using System.IO;
 #if UNITY_EDITOR
 using UnityEditor;
 #endif
+using System;
 
 /// <summary>
 /// 地块数据结构
@@ -191,6 +192,7 @@ public class BlockManager : MonoBehaviour
     [Header("道具配置")]
     [SerializeField] private bool useCustomItemPrefab = true;  // 是否使用自定义道具预制体
     [SerializeField] private string itemPrefabPath = "Prefabs/Item";  // 道具预制体在Resources中的路径
+    [SerializeField] private string interactPrefabPath = "Prefabs/Interactable";  // 道具预制体在Resources中的路径
     [SerializeField] private bool allowFallbackToGeometry = true;  // 当预制体加载失败时是否允许回退到基础几何体
     
     // 矩阵地块数据 - 使用二维数组存储，便于相邻查找
@@ -982,9 +984,15 @@ public class BlockManager : MonoBehaviour
             CreateFallbackItemInstanceAtPosition(position, config, interactionType);
             return;
         }
-        
+
+        string finalPath = itemPrefabPath;
         // 从Resources文件夹加载道具预制体
-        GameObject itemPrefab = Resources.Load<GameObject>(itemPrefabPath);
+        if (interactionType == ItemInteractionType.Interactable)
+        {
+            finalPath = interactPrefabPath + Convert.ToString(config.coordinates.Length);
+        }
+        GameObject itemPrefab = Resources.Load<GameObject>(finalPath);
+        
         
         if (itemPrefab == null)
         {
