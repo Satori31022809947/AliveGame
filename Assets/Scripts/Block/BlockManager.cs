@@ -22,13 +22,13 @@ public class BlockData
     public int column;                     // 列坐标
     
     // 道具相关
-    public ItemType itemType = ItemType.None;    // 道具类型
-    public bool hasItem = false;                 // 是否有道具
-    public bool isItemCollected = false;         // 道具是否已被拾取
-    public int itemValue = 0;                    // 道具数值
-    public string itemName = "";                 // 道具名称
-    public GameObject itemInstance;              // 道具3D模型实例
-    public Vector3 itemOffset = Vector3.up;     // 道具相对地块的偏移
+    public ItemInteractionType interactionType = ItemInteractionType.Other;  // 交互类型
+    public bool hasItem = false;                            // 是否有道具
+    public bool isItemCollected = false;                    // 道具是否已被拾取/交互
+    public string itemName = "";                            // 道具名称
+    public GameObject itemInstance;                         // 道具3D模型实例
+    public Vector3 itemOffset = Vector3.up;                // 道具相对地块的偏移
+    public string linkedItemName = "";                     // 如果是多格道具的一部分，记录主道具名称
     
     public BlockData(int id, Vector3 pos, BlockType type, Transform trans, int r = -1, int c = -1)
     {
@@ -66,15 +66,13 @@ public enum Direction
 }
 
 /// <summary>
-/// 道具类型枚举
+/// 道具交互类型枚举
 /// </summary>
-public enum ItemType
+public enum ItemInteractionType
 {
-    None,        // 无道具
-    Eye,        // 纽扣眼睛
-    Hair,         // 头发
-    Arm,         // 一条胳膊
-    Cloth       // 衣服
+    Collectible,    // 可拾取道具
+    Interactable,   // 可交互道具
+    Other          // 其他（装饰品等）
 }
 
 /// <summary>
@@ -83,14 +81,9 @@ public enum ItemType
 [System.Serializable]
 public class ItemConfig
 {
-    public int blockId;
-    public string itemType;
-    public int itemValue;
-    public string itemName;
-    public string prefabPath;
-    public float[] position = new float[3];
-    public float[] rotation = new float[3];
-    public float[] scale = new float[3];
+    public string itemName;                    // 道具名称
+    public int[] blockIds;                     // 占用的地块ID数组（支持1-3格）
+    public string interactionType; // 交互类型：Collectible/Interactable/Other
 }
 
 /// <summary>
@@ -431,62 +424,148 @@ public class BlockManager : MonoBehaviour
     /// </summary>
     private void ApplyItemConfig(ItemConfig config)
     {
-        if (allBlocks.ContainsKey(config.blockId))
+        // 验证blockIds数组
+        if (config.blockIds == null || config.blockIds.Length == 0)
         {
-            BlockData block = allBlocks[config.blockId];
+            Debug.LogWarning($"BlockManager: 道具 {config.itemName} 的blockIds为空，跳过创建");
+            return;
+        }
+        
+        if (config.blockIds.Length > 3)
+        {
+            Debug.LogWarning($"BlockManager: 道具 {config.itemName} 占用超过3格地块，只使用前3个");
+        }
+        
+        // 解析交互类型
+        ItemInteractionType interactionType = ParseInteractionType(config.interactionType);
+        
+        // 检查所有地块是否存在
+        List<int> validBlockIds = new List<int>();
+        foreach (int blockId in config.blockIds)
+        {
+            if (allBlocks.ContainsKey(blockId))
+            {
+                validBlockIds.Add(blockId);
+            }
+            else
+            {
+                Debug.LogWarning($"BlockManager: 地块 {blockId} 不存在，道具 {config.itemName} 将跳过此地块");
+            }
+        }
+        
+        if (validBlockIds.Count == 0)
+        {
+            Debug.LogWarning($"BlockManager: 道具 {config.itemName} 没有有效的地块，跳过创建");
+            return;
+        }
+        
+        // 为所有相关地块设置道具信息
+        for (int i = 0; i < validBlockIds.Count; i++)
+        {
+            int blockId = validBlockIds[i];
+            BlockData block = allBlocks[blockId];
             
-            // 设置道具数据
+            // 设置基本道具数据
             block.hasItem = true;
-            block.itemType = ParseItemType(config.itemType);
-            block.itemValue = config.itemValue;
+            block.interactionType = interactionType;
             block.itemName = config.itemName;
-            block.itemOffset = new Vector3(config.position[0], config.position[1], config.position[2]);
+            block.linkedItemName = config.itemName; // 所有格子都链接到同一个道具名称
             
-            // 创建道具3D模型
-            CreateItemInstance(block, config);
+            // 只在第一个地块创建3D模型（主要显示位置）
+            if (i == 0)
+            {
+                CreateSimpleItemInstance(block, config);
+            }
             
-            Debug.Log($"BlockManager: 在地块 {config.blockId} 创建道具 {config.itemName}");
+            Debug.Log($"BlockManager: 在地块 {blockId} 设置道具 {config.itemName} " +
+                     $"(类型: {interactionType}, {i + 1}/{validBlockIds.Count})");
         }
-        else
-        {
-            Debug.LogWarning($"BlockManager: 地块 {config.blockId} 不存在，无法创建道具 {config.itemName}");
-        }
+        
+        Debug.Log($"BlockManager: 道具 {config.itemName} 创建完成，占用 {validBlockIds.Count} 个地块");
     }
     
     /// <summary>
-    /// 创建道具3D模型实例
+    /// 创建简化的道具3D模型实例
     /// </summary>
-    private void CreateItemInstance(BlockData block, ItemConfig config)
+    private void CreateSimpleItemInstance(BlockData block, ItemConfig config)
     {
-        // 尝试从Resources文件夹加载预制体
-        GameObject itemPrefab = Resources.Load<GameObject>(config.prefabPath);
+        // 创建基础几何体作为道具显示
+        GameObject itemObject = CreateItemGeometry(block.interactionType);
         
-        if (itemPrefab != null)
+        // 设置位置
+        Vector3 itemPosition = block.position + block.itemOffset;
+        itemObject.transform.position = itemPosition;
+        
+        // 设置名称
+        itemObject.name = $"Item_{config.itemName}";
+        
+        // TODO:设置美术素材
+        //SetItemAppearance(itemObject, block.interactionType, block.itemType);
+        
+        // 保存实例引用
+        block.itemInstance = itemObject;
+        
+        // 添加动画效果
+        AddItemAnimation(itemObject);
+        
+        Debug.Log($"BlockManager: 创建道具模型 {config.itemName} (交互类型: {block.interactionType})");
+    }
+    
+    /// <summary>
+    /// 创建道具几何体
+    /// </summary>
+    private GameObject CreateItemGeometry(ItemInteractionType interactionType)
+    {
+        GameObject itemObject;
+        
+        // 根据交互类型选择不同的几何体
+        switch (interactionType)
         {
-            // 计算道具位置
-            Vector3 itemPosition = block.position + block.itemOffset;
-            
-            // 设置旋转和缩放
-            Quaternion itemRotation = Quaternion.Euler(config.rotation[0], config.rotation[1], config.rotation[2]);
-            Vector3 itemScale = new Vector3(config.scale[0], config.scale[1], config.scale[2]);
-            
-            // 实例化道具
-            block.itemInstance = Instantiate(itemPrefab, itemPosition, itemRotation);
-            block.itemInstance.transform.localScale = itemScale;
-            
-            // 设置道具名称（便于调试）
-            block.itemInstance.name = $"Item_{config.itemName}_Block{config.blockId}";
-            
-            // 添加简单的动画效果
-            AddItemAnimation(block.itemInstance);
+            case ItemInteractionType.Collectible:
+                itemObject = GameObject.CreatePrimitive(PrimitiveType.Sphere);
+                itemObject.transform.localScale = Vector3.one * 0.3f;
+                break;
+                
+            case ItemInteractionType.Interactable:
+                itemObject = GameObject.CreatePrimitive(PrimitiveType.Cube);
+                itemObject.transform.localScale = Vector3.one * 0.4f;
+                break;
+                
+            case ItemInteractionType.Other:
+            default:
+                itemObject = GameObject.CreatePrimitive(PrimitiveType.Cylinder);
+                itemObject.transform.localScale = new Vector3(0.3f, 0.2f, 0.3f);
+                break;
         }
-        else
+        
+        return itemObject;
+    }
+    
+    /// <summary>
+    /// 设置道具外观（颜色、材质等）
+    /// </summary>
+    private void SetItemAppearance(GameObject itemObject, ItemInteractionType interactionType)
+    {
+        Renderer renderer = itemObject.GetComponent<Renderer>();
+        if (renderer == null) return;
+        
+        // 根据交互类型设置基础颜色
+        Color baseColor = Color.white;
+        switch (interactionType)
         {
-            Debug.LogWarning($"BlockManager: 无法加载道具预制体: {config.prefabPath}");
-            
-            // 如果预制体不存在，创建一个简单的替代物
-            CreateFallbackItem(block, config);
+            case ItemInteractionType.Collectible:
+                baseColor = Color.yellow;  // 可拾取道具用黄色
+                break;
+            case ItemInteractionType.Interactable:
+                baseColor = Color.blue;    // 可交互道具用蓝色
+                break;
+            case ItemInteractionType.Other:
+                baseColor = Color.gray;    // 其他道具用灰色
+                break;
         }
+        
+        
+        renderer.material.color = baseColor;
     }
     
     /// <summary>
@@ -498,87 +577,130 @@ public class BlockManager : MonoBehaviour
         ItemAnimator animator = itemInstance.AddComponent<ItemAnimator>();
     }
     
-    /// <summary>
-    /// 创建替代道具（当预制体不存在时）
-    /// </summary>
-    private void CreateFallbackItem(BlockData block, ItemConfig config)
-    {
-        // 创建一个简单的立方体作为替代
-        GameObject fallbackItem = GameObject.CreatePrimitive(PrimitiveType.Cube);
-        fallbackItem.transform.position = block.position + block.itemOffset;
-        fallbackItem.transform.localScale = Vector3.one * 0.3f;
-        
-        // TODO：根据道具类型设置素材
-        Renderer renderer = fallbackItem.GetComponent<Renderer>();
-        // switch (block.itemType)
-        // {
-        //     case ItemType.Coin:
-        //         renderer.material.color = Color.yellow;
-        //         break;
-        //     case ItemType.Gem:
-        //         renderer.material.color = Color.blue;
-        //         break;
-        //     case ItemType.Key:
-        //         renderer.material.color = Color.red;
-        //         break;
-        //     case ItemType.Potion:
-        //         renderer.material.color = Color.green;
-        //         break;
-        //     default:
-        //         
-        //         break;
-        // }
-        
-        fallbackItem.name = $"FallbackItem_{config.itemName}_Block{config.blockId}";
-        block.itemInstance = fallbackItem;
-        
-        // 添加动画
-        AddItemAnimation(fallbackItem);
-        
-        Debug.Log($"BlockManager: 为道具 {config.itemName} 创建了替代模型");
-    }
     
     /// <summary>
-    /// 解析道具类型字符串
+    /// 解析交互类型字符串
     /// </summary>
-    private ItemType ParseItemType(string itemTypeString)
+    private ItemInteractionType ParseInteractionType(string interactionTypeString)
     {
-        if (System.Enum.TryParse<ItemType>(itemTypeString, out ItemType result))
+        if (string.IsNullOrEmpty(interactionTypeString))
+        {
+            return ItemInteractionType.Other;
+        }
+        
+        if (System.Enum.TryParse<ItemInteractionType>(interactionTypeString, out ItemInteractionType result))
         {
             return result;
         }
         
-        Debug.LogWarning($"BlockManager: 未知的道具类型 {itemTypeString}，默认为 None");
-        return ItemType.None;
+        Debug.LogWarning($"BlockManager: 未知的交互类型 {interactionTypeString}，默认为 Other");
+        return ItemInteractionType.Other;
     }
     
     /// <summary>
-    /// 收集指定地块的道具
+    /// 收集/交互指定地块的道具
     /// </summary>
     public bool CollectItemFromBlock(int blockId)
     {
-        if (allBlocks.ContainsKey(blockId))
+        if (!allBlocks.ContainsKey(blockId))
         {
-            BlockData block = allBlocks[blockId];
-            
-            if (block.hasItem && !block.isItemCollected)
-            {
-                // 标记道具已被收集
-                block.isItemCollected = true;
+            return false;
+        }
+        
+        BlockData block = allBlocks[blockId];
+        
+        if (!block.hasItem || block.isItemCollected)
+        {
+            return false;
+        }
+        
+        // 获取道具名称，用于查找所有相关地块
+        string itemName = block.linkedItemName;
+        if (string.IsNullOrEmpty(itemName))
+        {
+            itemName = block.itemName;
+        }
+        
+        // 查找所有属于同一道具的地块
+        List<BlockData> relatedBlocks = FindBlocksByItemName(itemName);
+        
+        if (relatedBlocks.Count == 0)
+        {
+            return false;
+        }
+        
+        // 判断交互类型
+        ItemInteractionType interactionType = block.interactionType;
+        bool canInteract = false;
+        
+        switch (interactionType)
+        {
+            case ItemInteractionType.Collectible:
+                canInteract = true; // 可拾取道具总是可以收集
+                break;
                 
-                // 销毁道具3D模型
-                if (block.itemInstance != null)
+            case ItemInteractionType.Interactable:
+                canInteract = true; // 可交互道具也可以交互
+                break;
+                
+            case ItemInteractionType.Other:
+                canInteract = false; // 装饰品等不能交互
+                Debug.Log($"BlockManager: 道具 {itemName} 是装饰品，无法交互");
+                break;
+        }
+        
+        if (!canInteract)
+        {
+            return false;
+        }
+        
+        // 处理所有相关地块
+        bool success = false;
+        foreach (BlockData relatedBlock in relatedBlocks)
+        {
+            if (!relatedBlock.isItemCollected)
+            {
+                // 标记为已收集/交互
+                relatedBlock.isItemCollected = true;
+                
+                // 销毁3D模型（只有有模型的地块才需要销毁）
+                if (relatedBlock.itemInstance != null)
                 {
-                    Destroy(block.itemInstance);
-                    block.itemInstance = null;
+                    Destroy(relatedBlock.itemInstance);
+                    relatedBlock.itemInstance = null;
                 }
                 
-                Debug.Log($"BlockManager: 收集了道具 {block.itemName} (价值: {block.itemValue})");
-                return true;
+                success = true;
             }
         }
         
-        return false;
+        if (success)
+        {
+            string actionName = interactionType == ItemInteractionType.Collectible ? "收集" : "交互";
+            Debug.Log($"BlockManager: {actionName}了道具 {itemName} " +
+                     $"(类型: {interactionType}, 占用 {relatedBlocks.Count} 个地块)");
+        }
+        
+        return success;
+    }
+    
+    /// <summary>
+    /// 根据道具名称查找所有相关地块
+    /// </summary>
+    private List<BlockData> FindBlocksByItemName(string itemName)
+    {
+        List<BlockData> result = new List<BlockData>();
+        
+        foreach (var block in allBlocks.Values)
+        {
+            if (block.hasItem && 
+                (block.itemName == itemName || block.linkedItemName == itemName))
+            {
+                result.Add(block);
+            }
+        }
+        
+        return result;
     }
 
     /// <summary>

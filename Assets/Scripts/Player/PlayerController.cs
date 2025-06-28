@@ -334,12 +334,13 @@ public class PlayerController : MonoBehaviour
             if (collected)
             {
                 // 更新玩家道具统计
-                UpdateItemInventory(block.itemType, block.itemValue, block.itemName);
+                UpdateItemInventory(block.interactionType, block.itemName);
                 
                 // 播放拾取反馈
                 PlayPickupFeedback(block);
                 
-                Debug.Log($"PlayerController: 拾取了 {block.itemName} (价值: {block.itemValue})");
+                string actionName = block.interactionType == ItemInteractionType.Collectible ? "拾取" : "交互";
+                Debug.Log($"PlayerController: {actionName}了 {block.itemName} (类型: {block.interactionType})");
             }
         }
     }
@@ -347,10 +348,26 @@ public class PlayerController : MonoBehaviour
     /// <summary>
     /// 更新玩家道具库存
     /// </summary>
-    private void UpdateItemInventory(ItemType itemType, int itemValue, string itemName)
+    private void UpdateItemInventory(ItemInteractionType interactionType, string itemName)
     {
         // 添加到收集清单
         collectedItemNames.Add(itemName);
+        
+        // 根据交互类型打印不同信息
+        switch (interactionType)
+        {
+            case ItemInteractionType.Collectible:
+                Debug.Log($"收集了道具: {itemName}");
+                break;
+                
+            case ItemInteractionType.Interactable:
+                Debug.Log($"交互了物品: {itemName}");
+                break;
+                
+            case ItemInteractionType.Other:
+                Debug.Log($"发现了装饰品: {itemName}");
+                break;
+        }
     }
     
     /// <summary>
@@ -401,7 +418,7 @@ public class PlayerController : MonoBehaviour
     /// <summary>
     /// 检查是否拥有特定数量的道具
     /// </summary>
-    public bool HasItem(ItemType itemType, int requiredAmount = 1)
+    public bool HasItem()
     {
         //TODO:item 收集判断
         // switch (itemType)
