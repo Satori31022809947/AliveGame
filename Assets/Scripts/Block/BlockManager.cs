@@ -987,7 +987,7 @@ public class BlockManager : MonoBehaviour
 
         string finalPath = itemPrefabPath;
         // 从Resources文件夹加载道具预制体
-        if (interactionType == ItemInteractionType.Interactable)
+        if (interactionType != ItemInteractionType.Collectible)
         {
             finalPath = interactPrefabPath + config.itemName;
         }

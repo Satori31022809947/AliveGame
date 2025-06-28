@@ -95,14 +95,14 @@
       "interactionType": "Interactable"
     },
     {
-      "itemName": "Chair",
+      "itemName": "Chair1",
       "coordinates": [
         {"row": 4, "col": 6}
       ],
       "interactionType": "Interactable"
     },
     {
-      "itemName": "Chair",
+      "itemName": "Chair2",
       "coordinates": [
         {"row": 6, "col": 10}
       ],
