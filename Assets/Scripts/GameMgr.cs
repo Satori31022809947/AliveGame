@@ -46,14 +46,22 @@ public class GameMgr : MonoBehaviour
     {
     }
 
+    [SerializeField] private int enableDelayTime = 3000; // 启用延迟时间（毫秒）
+
     public void StartGame()
     {
-        long curTime = DateTime.UtcNow.ToUniversalTime().Ticks / 10000;
         StartGamePage.SetActive(false);
-        InputMgr.Instance.Enable();
         AudioMgr.Instance.PlayBackgroundMusic();
-        BeatMgr.Instance.SetBeatStartTime(curTime);
+        // 延迟启用 InputMgr 和 BeatMgr
+        Invoke("EnableInputAndBeat", enableDelayTime / 1000f);
+    }
+
+    private void EnableInputAndBeat()
+    {
+        long curTime = DateTime.UtcNow.ToUniversalTime().Ticks / 10000;
         gameStartTime = DateTime.Now;
+        InputMgr.Instance.Enable();
+        BeatMgr.Instance.SetBeatStartTime(curTime);
     }
 
     public void EndGame()
