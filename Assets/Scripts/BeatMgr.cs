@@ -96,7 +96,7 @@ public class BeatMgr : MonoBehaviour
         }
     }
 
-    private long GetBeatTime(long index)
+    public long GetBeatTime(long index)
     {
         return startTime + index * 60000 / bpm;
     }
@@ -176,9 +176,8 @@ public class BeatMgr : MonoBehaviour
         return beatIndex;
     }
 
-    public int GetNearestBeat()
+    public int GetNearestBeat(long curTime)
     {
-        long curTime = DateTime.UtcNow.ToUniversalTime().Ticks / 10000;
         
         long curBeatTime = GetBeatTime(beatIndex);
         long nextBeatTime = GetBeatTime(beatIndex + 1);

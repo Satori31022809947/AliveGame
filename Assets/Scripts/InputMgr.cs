@@ -3,6 +3,7 @@ using System.Collections.Generic;
 using UnityEngine;
 using UnityEngine.InputSystem;
 using System;
+using System.Net.NetworkInformation;
 
 public enum InputType
 {
@@ -49,6 +50,9 @@ public class InputMgr : MonoBehaviour
     // 输入状态记录
     private InputType lastInput = InputType.None;
     private int lastInputBeat = -1; // 记录上一次input的时候是哪一拍
+
+    [SerializeField] private long leftEps = 200;
+    [SerializeField] private long rightEps = 200;
     
     void Awake()
     {
@@ -114,7 +118,9 @@ public class InputMgr : MonoBehaviour
     /// <returns>是否成功处理输入</returns>
     public bool TryProcessInput(InputType inputType)
     {
-        int currentBeat = BeatMgr.Instance.GetNearestBeat(); 
+        long curTime = DateTime.UtcNow.ToUniversalTime().Ticks / 10000;
+
+        int currentBeat = BeatMgr.Instance.GetNearestBeat(curTime); 
         if (currentBeat <= lastInputBeat)
         {
             Debug.Log($"Input Failed Because only one move in one beat {currentBeat}");
@@ -123,8 +129,23 @@ public class InputMgr : MonoBehaviour
         
         Debug.Log($"Input Succeed {inputType} at beat {currentBeat}");
         lastInputBeat = currentBeat;
+        if (!IsPerfectInput(curTime, currentBeat))
+        {
+            Debug.Log("Not Perfect Input");
+            NoiseControlMgr.Instance.AddNoise();
+        }
+        else
+        {
+            Debug.Log("Perfect Input");
+        }
         ProcessInput(inputType);
         return true;
+    }
+
+    public bool IsPerfectInput(long curTime, long currentBeatIndex)
+    {
+        long beatTime = BeatMgr.Instance.GetBeatTime(currentBeatIndex);
+        return beatTime - leftEps <= curTime && curTime <= beatTime + rightEps;
     }
     
     /// <summary>

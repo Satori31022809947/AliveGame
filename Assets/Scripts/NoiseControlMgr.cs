@@ -23,6 +23,7 @@ public class NoiseControlMgr : MonoBehaviour
 
     [SerializeField] private int noiseValue = 0; // 当前噪声值
     [SerializeField] private int noiseThreshold = 100; // 噪声阈值
+    [SerializeField] private int noiseAddValue = 100; // 噪声阈值
     [SerializeField] private int noiseDecreaseSpeed = 5; // 噪声下降速度
 
     public Action OnNoiseThresholdReached; // 噪声达到阈值时触发的事件
@@ -49,7 +50,12 @@ public class NoiseControlMgr : MonoBehaviour
     {
         if (type != BeatType.Dangerous)
         {
-            AddNoise(-noiseDecreaseSpeed);
+
+            noiseValue -= noiseDecreaseSpeed;
+            if (noiseValue <= 0)
+            {
+                noiseValue = 0;
+            }
         }
     }
     
@@ -57,10 +63,9 @@ public class NoiseControlMgr : MonoBehaviour
     /// <summary>
     /// 修改噪声值
     /// </summary>
-    /// <param name="value">要增加的值</param>
-    public void AddNoise(int value)
+    public void AddNoise()
     {
-        noiseValue += value;
+        noiseValue += noiseAddValue;
         if (noiseValue >= noiseThreshold)
         {
             Debug.Log("Dead");
