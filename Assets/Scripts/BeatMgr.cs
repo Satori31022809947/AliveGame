@@ -149,7 +149,6 @@ public class BeatMgr : MonoBehaviour
     private IEnumerator DelayPlayWarningSound()
     {
         yield return new WaitForSeconds(0.3f);
-        NoiseControlMgr.Instance.AddNoise();
         AudioMgr.Instance.PlaySoundEffect(SoundEffectType.Warning, 2f);
     }
 
