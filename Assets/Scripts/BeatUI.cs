@@ -11,6 +11,7 @@ public class BeatUI : MonoBehaviour
     
     private void Start()
     {
+        beatIndexText.gameObject.SetActive(false);
         HideAllObjects();
     }
 
@@ -25,6 +26,8 @@ public class BeatUI : MonoBehaviour
 
     public void UpdateBeatUI(int beatIndex, BeatType beatType)
     {
+        
+        beatIndexText.gameObject.SetActive(true);
         HideAllObjects();
         beatIndexText.text = "Beat Index: " + beatIndex;
         ShowObjectBasedOnIndex(beatIndex);

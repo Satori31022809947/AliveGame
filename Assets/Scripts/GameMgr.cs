@@ -55,10 +55,14 @@ public class GameMgr : MonoBehaviour
     [SerializeField] private int enableDelayTime = 3000; // 启用延迟时间（毫秒）
     [SerializeField] public int BeatLimit = 200;       // 要在多少拍内逃脱
 
+    public Action OnGameStart;
+    public Action OnGameEnd;
+    
     public void StartGame()
     {
         StartGamePage.SetActive(false);
         AudioMgr.Instance.PlayBackgroundMusic();
+        OnGameStart?.Invoke();
         // 延迟启用 InputMgr 和 BeatMgr
         Invoke("EnableInputAndBeat", enableDelayTime / 1000f);
     }
@@ -73,9 +77,15 @@ public class GameMgr : MonoBehaviour
 
     public void EndGame()
     {
+        OnGameEnd?.Invoke();
         AudioMgr.Instance.StopBackgroundMusic();
         InputMgr.Instance.Disable();
         BeatMgr.Instance.Disable();
+    }
+
+    private void OnDestroy()
+    {
+        instance = null;
     }
 
     public void Win()

@@ -53,19 +53,6 @@ public class InputMgr : MonoBehaviour
     [SerializeField] private long leftEps = 200;
     [SerializeField] private long rightEps = 200;
     
-    void Awake()
-    {
-        // 确保只有一个实例
-        if (instance == null)
-        {
-            instance = this;
-            DontDestroyOnLoad(gameObject);
-        }
-        else if (instance != this)
-        {
-            Destroy(gameObject);
-        }
-    }
 
     void Start()
     {

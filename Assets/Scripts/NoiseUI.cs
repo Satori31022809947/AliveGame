@@ -9,17 +9,34 @@ public class NoiseUI : MonoBehaviour
     private void OnEnable()
     {
         NoiseControlMgr.Instance.OnNoiseChanged += UpdateUI;
+        GameMgr.Instance.OnGameStart += OnGameStart;
+        GameMgr.Instance.OnGameEnd += OnGameEnd;
     }
 
     private void OnDisable()
     {
         NoiseControlMgr.Instance.OnNoiseChanged -= UpdateUI;
+        GameMgr.Instance.OnGameStart -= OnGameStart;
+        GameMgr.Instance.OnGameEnd -= OnGameEnd;
     }
 
     private void Start()
     {
-        UpdateUI();
     }
+
+    private void OnGameStart()
+    {
+        noiseText.gameObject.SetActive(true);
+        noiseProgressBar.gameObject.SetActive(true);
+    }
+
+
+    private void OnGameEnd()
+    {
+        noiseText.gameObject.SetActive(false);
+        noiseProgressBar.gameObject.SetActive(false);
+    }
+
 
     private void UpdateUI()
     {

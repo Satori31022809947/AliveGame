@@ -29,18 +29,6 @@ public class NoiseControlMgr : MonoBehaviour
     public Action OnNoiseThresholdReached; // 噪声达到阈值时触发的事件
     public Action OnNoiseChanged; // 噪声值改变时触发的事件
 
-    private void Awake()
-    {
-        if (instance == null)
-        {
-            instance = this;
-            DontDestroyOnLoad(gameObject);
-        }
-        else if (instance != this)
-        {
-            Destroy(gameObject);
-        }
-    }
 
     private void Update()
     {
@@ -63,6 +51,11 @@ public class NoiseControlMgr : MonoBehaviour
     }
     
     
+    private void OnDestroy()
+    {
+        instance = null;
+    }
+
     /// <summary>
     /// 修改噪声值
     /// </summary>
