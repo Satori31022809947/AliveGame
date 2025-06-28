@@ -133,6 +133,7 @@ public class BeatMgr : MonoBehaviour
                 break;
             case BeatType.Warning:
                 Debug.Log("BeatMgr: OnBeat: Warning");
+                AudioMgr.Instance.PlaySoundEffect(SoundEffectType.Warning);
                 break;
             case BeatType.None:
                 playerController.detectDangerous = false;
