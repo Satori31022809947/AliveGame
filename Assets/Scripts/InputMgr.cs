@@ -108,11 +108,11 @@ public class InputMgr : MonoBehaviour
     {
         long curTime = DateTime.UtcNow.ToUniversalTime().Ticks / 10000;
 
-        int currentBeat = BeatMgr.Instance.GetNearestBeat(curTime); 
+        int currentBeat = BeatMgr.Instance.GetNearestBeat(curTime);
+        bool isPerfect = true;
         if (currentBeat <= lastInputBeat)
         {
-            Debug.Log($"Input Failed Because only one move in one beat {currentBeat}");
-            return false;
+            isPerfect = false;
         }
         
         lastInputBeat = currentBeat;
@@ -129,7 +129,8 @@ public class InputMgr : MonoBehaviour
         }
         
         Debug.Log($"Input Succeed {inputType} at beat {currentBeat}");
-        if (!IsPerfectInput(curTime, currentBeat))
+        isPerfect &= IsPerfectInput(curTime, currentBeat);
+        if (isPerfect)
         {
             StartCoroutine(DelayNonPerfectInputActions());
         }
