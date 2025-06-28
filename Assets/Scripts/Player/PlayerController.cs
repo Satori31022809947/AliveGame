@@ -396,7 +396,7 @@ public class PlayerController : MonoBehaviour
             
             Vector3 targetPosition = targetBlock.position;
             // 设置Y坐标稍微高一点，避免嵌入地块
-            targetPosition.y += 4.15f;
+            targetPosition.y += 4.11f;
             targetPosition.z += 3.79f;
             transform.position = targetPosition;
             HandleTips();
@@ -587,7 +587,7 @@ public class PlayerController : MonoBehaviour
     {
         Vector3 targetPosition = block.position;
         // 设置Y坐标稍微高一点，避免嵌入地块
-        targetPosition.y += 4.15f;
+        targetPosition.y += 4.11f;
         targetPosition.z += 3.79f;
         return targetPosition;
     }

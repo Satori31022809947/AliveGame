@@ -137,7 +137,7 @@ public class BlockConfig
 {
     public int row;                        // 行坐标
     public int column;                     // 列坐标
-    public bool isDangerous = false;        // 是否危险
+    public bool isDangerous = true;        // 是否危险
     public string blockType = "Normal";    // 地块类型（可选）
     public float movementSpeed = 1f;       // 移动速度修正（可选）
     public bool isWalkable = true;         // 是否可行走（可选）
@@ -989,7 +989,7 @@ public class BlockManager : MonoBehaviour
         // 从Resources文件夹加载道具预制体
         if (interactionType == ItemInteractionType.Interactable)
         {
-            finalPath = interactPrefabPath + Convert.ToString(config.coordinates.Length);
+            finalPath = interactPrefabPath + config.itemName;
         }
         GameObject itemPrefab = Resources.Load<GameObject>(finalPath);
         
@@ -1023,7 +1023,10 @@ public class BlockManager : MonoBehaviour
         itemObject.name = $"Item_{config.itemName}";
         
         // 根据交互类型设置道具外观
-        SetItemAppearance(itemObject, config.itemName);
+        if (interactionType == ItemInteractionType.Collectible)
+        {
+            SetItemAppearance(itemObject, config.itemName);
+        }
         
         // 根据交互类型添加动画效果
         if (interactionType == ItemInteractionType.Collectible)
@@ -1050,7 +1053,11 @@ public class BlockManager : MonoBehaviour
         itemObject.name = $"Item_{config.itemName}_Fallback";
         
         // 设置外观
-        SetItemAppearance(itemObject, config.itemName);
+        if (interactionType == ItemInteractionType.Collectible)
+        {
+            SetItemAppearance(itemObject, config.itemName);
+        }
+        
         
         // 添加动画效果
         AddItemAnimation(itemObject);
