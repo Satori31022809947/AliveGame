@@ -46,6 +46,8 @@ public class InputMgr : MonoBehaviour
     public static event Action OnMoveRight;
     public static event Action OnInteract;
     
+    public static event Action OnInteractFailed;
+    
     // 输入状态记录
     private InputType lastInput = InputType.None;
     private int lastInputBeat = -1; // 记录上一次input的时候是哪一拍
@@ -121,6 +123,7 @@ public class InputMgr : MonoBehaviour
             {
                 Debug.Log("Input Interacted 失败，因为不在重拍上");
                 // 交互失败
+                OnInteractFailed?.Invoke();
                 return false;
             }
         }
