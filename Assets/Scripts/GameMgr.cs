@@ -195,4 +195,16 @@ public class GameMgr : MonoBehaviour
             LosePage.SetActive(true);
         }
     }
+    
+    /// <summary>
+    /// 退出游戏
+    /// </summary>
+    public void QuitGame()
+    {
+    #if UNITY_EDITOR
+        UnityEditor.EditorApplication.isPlaying = false;
+    #else
+        Application.Quit();
+    #endif
+    }
 }
