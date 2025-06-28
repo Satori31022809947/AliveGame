@@ -15,14 +15,14 @@
       "interactionType": "Collectible"
     },
     {
-      "itemName": "Arm",
+      "itemName": "LeftArm",
       "coordinates": [
         {"row": 0, "col": 11}
       ],
       "interactionType": "Collectible"
     },
     {
-      "itemName": "Cloths",
+      "itemName": "RightArm",
       "coordinates": [
         {"row": 6, "col": 15}
       ],
