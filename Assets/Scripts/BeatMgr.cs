@@ -1,5 +1,20 @@
 using System;
+using System.Collections.Generic;
+using System.IO;
 using UnityEngine;
+
+[System.Serializable]
+public class BeatSequenceItem
+{
+    public int index;
+    public BeatType type;
+}
+
+public enum BeatType
+{
+    None,
+    Dangerous,
+}
 
 public class BeatMgr : MonoBehaviour
 {
@@ -25,11 +40,18 @@ public class BeatMgr : MonoBehaviour
     [SerializeField] private int bpm = 108;
     [SerializeField] private long startTime = 0;         // 节拍开始初始时间 (毫秒)
     [SerializeField] private BeatUI beatUI;             // 节拍器UI
-    
+    [SerializeField] public List<BeatSequenceItem> BeatSequence = new List<BeatSequenceItem>();
+
+    private Dictionary<int, BeatType> BeatMap =  new Dictionary<int, BeatType>();
+
     private int beatIndex;
 
     private void Start()
     {
+        foreach (var t in BeatSequence)
+        {
+            BeatMap.Add(t.index, t.type);
+        }
     }
 
     private void Update()
@@ -48,6 +70,7 @@ public class BeatMgr : MonoBehaviour
     {
         startTime = time;
         beatIndex = 0;
+        beatUI.UpdateBeatUI(beatIndex);
         Enable();
     }
 
@@ -57,6 +80,15 @@ public class BeatMgr : MonoBehaviour
         Debug.Log("BeatMgr: OnBeat");
         beatIndex++;
         beatUI.UpdateBeatUI(beatIndex);
+        if (BeatMap.ContainsKey(beatIndex))
+        {
+            switch (BeatMap[beatIndex])
+            {
+                case BeatType.Dangerous:
+                    Debug.Log("BeatMgr: OnBeat: Dangerous");
+                    break;
+            }   
+        }
     }
 
     public void SetBPM(int newBpm)

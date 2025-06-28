@@ -435,9 +435,12 @@ MonoBehaviour:
   m_Script: {fileID: 11500000, guid: f13653c78b3e4aa458dfe67e6ae079c1, type: 3}
   m_Name: 
   m_EditorClassIdentifier: 
-  beatLength: 1000
+  bpm: 108
   startTime: 0
   beatUI: {fileID: 969185251}
+  BeatSequence:
+  - index: 5
+    type: 1
 --- !u!4 &207815488
 Transform:
   m_ObjectHideFlags: 0
