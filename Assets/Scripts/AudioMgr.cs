@@ -1,5 +1,13 @@
 using UnityEngine;
 using System.Collections.Generic;
+using UnityEngine.Windows;
+
+[System.Serializable]
+public class SoundEffectClipPair
+{
+    public SoundEffectType type;
+    public AudioClip clip;
+}
 
 public enum SoundEffectType
 {
@@ -34,10 +42,14 @@ public class AudioMgr : MonoBehaviour
     [SerializeField] private AudioSource soundEffectSource;
     
     [SerializeField] private AudioClip backgroundMusic;
-    [SerializeField] private Dictionary<SoundEffectType, AudioClip> soundEffectClips = new Dictionary<SoundEffectType, AudioClip>();
-
+    [SerializeField] private List<SoundEffectClipPair> soundEffectClips = new List<SoundEffectClipPair>();
+    Dictionary<SoundEffectType, AudioClip> clipDictionary = new Dictionary<SoundEffectType, AudioClip>();
     private void Start()
     {
+        foreach (var t in soundEffectClips)
+        {
+            clipDictionary.Add(t.type, t.clip);
+        }
     }
 
     public void PlayBackgroundMusic()
@@ -56,9 +68,9 @@ public class AudioMgr : MonoBehaviour
 
     public void PlaySoundEffect(SoundEffectType type)
     {
-        if (soundEffectClips.ContainsKey(type) && soundEffectClips[type] != null)
+        if (clipDictionary.ContainsKey(type) && clipDictionary[type] != null)
         {
-            soundEffectSource.PlayOneShot(soundEffectClips[type]);
+            soundEffectSource.PlayOneShot(clipDictionary[type]);
         }
     }
 }
