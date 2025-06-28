@@ -690,29 +690,29 @@ public class BlockManager : MonoBehaviour
             BlockConfig config = blockConfigs[key];
             
             // 应用配置到地块数据
-            blockData.isDangerous = config.isDangerous;
-            blockData.isWalkable = config.isWalkable;
-            blockData.movementSpeed = config.movementSpeed;
+            // blockData.isDangerous = config.isDangerous;
+            // blockData.isWalkable = config.isWalkable;
+            // blockData.movementSpeed = config.movementSpeed;
             
             // 解析并设置地块类型
-            switch (config.blockType.ToLower())
-            {
-                case "speed":
-                    blockData.blockType = BlockType.Speed;
-                    break;
-                case "slow":
-                    blockData.blockType = BlockType.Slow;
-                    break;
-                case "teleport":
-                    blockData.blockType = BlockType.Teleport;
-                    break;
-                case "obstacle":
-                    blockData.blockType = BlockType.Obstacle;
-                    break;
-                default:
-                    blockData.blockType = BlockType.Normal;
-                    break;
-            }
+            // switch (config.blockType.ToLower())
+            // {
+            //     case "speed":
+            //         blockData.blockType = BlockType.Speed;
+            //         break;
+            //     case "slow":
+            //         blockData.blockType = BlockType.Slow;
+            //         break;
+            //     case "teleport":
+            //         blockData.blockType = BlockType.Teleport;
+            //         break;
+            //     case "obstacle":
+            //         blockData.blockType = BlockType.Obstacle;
+            //         break;
+            //     default:
+            //         blockData.blockType = BlockType.Normal;
+            //         break;
+            // }
             
             Debug.Log($"BlockManager: 应用地块配置到 ({row},{col}) - 危险: {config.isDangerous}, 类型: {blockData.blockType}");
         }
@@ -850,6 +850,13 @@ public class BlockManager : MonoBehaviour
             block.interactionType = interactionType;
             block.itemName = config.itemName;
             block.linkedItemName = config.itemName; // 所有格子都链接到同一个道具名称
+            //如果item类型为other，标记地块不可走
+            if (interactionType == ItemInteractionType.Other)
+            {
+                block.isWalkable = false;
+            }
+           
+
             
             // 只在第一个地块创建3D模型（主要显示位置）
             //TODO：根据格子大小适配3d模型

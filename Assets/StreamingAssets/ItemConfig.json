@@ -27,6 +27,13 @@
         {"row": 6, "col": 15}
       ],
       "interactionType": "Collectible"
+    },
+    {
+      "itemName": "Obstacle",
+      "coordinates": [
+        {"row": 5, "col": 3}
+      ],
+      "interactionType": "Other"
     }
   ]
 } 
