@@ -32,7 +32,8 @@ public class GameMgr : MonoBehaviour
     public GameObject WinPage;
     public GameObject PerfectWinPage;
 
-    
+    [SerializeField] public List<Vector2Int> winPositions = new List<Vector2Int>(); // 修改为二维坐标
+
     public DateTime GameStartTime
     {
         get { return gameStartTime; }

@@ -117,8 +117,7 @@ public class InputMgr : MonoBehaviour
         lastInputBeat = currentBeat;
         if (!IsPerfectInput(curTime, currentBeat))
         {
-            Debug.Log("Not Perfect Input");
-            NoiseControlMgr.Instance.AddNoise();
+            StartCoroutine(DelayNonPerfectInputActions());
         }
         else
         {
@@ -126,6 +125,13 @@ public class InputMgr : MonoBehaviour
         }
         ProcessInput(inputType);
         return true;
+    }
+
+    private IEnumerator DelayNonPerfectInputActions()
+    {
+        yield return new WaitForSeconds(0.05f);
+        Debug.Log("Not Perfect Input");
+        NoiseControlMgr.Instance.AddNoise();
     }
 
     public bool IsPerfectInput(long curTime, long currentBeatIndex)

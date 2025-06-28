@@ -60,6 +60,15 @@ public class PlayerController : MonoBehaviour
             }
         }
         
+        // 胜利判断
+        foreach (Vector2Int pos in GameMgr.Instance.winPositions) {
+            BlockData targetBlock = BlockManager.Instance.GetBlockAt(pos.x, pos.y);
+            if (targetBlock != null && targetBlock.blockId == currentBlock.blockId) {
+                GameMgr.Instance.Win();
+                break;
+            }
+        }
+        
         // 更新Billboard效果
         UpdateBillboard();
     }
