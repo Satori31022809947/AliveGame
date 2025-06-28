@@ -11,6 +11,21 @@ public class PlayerController : MonoBehaviour
     // 移动时的过渡时间
     [SerializeField] private float transitionTime = 0.5f;
     
+    // 跳跃效果相关参数
+    [Header("跳跃效果")]
+    [SerializeField] private float jumpHeight = 2f; // 跳跃高度
+    [SerializeField] private AnimationCurve jumpCurve; // 跳跃曲线
+    [SerializeField] private bool enableJumpEffect = true; // 是否启用跳跃效果
+    
+    // 挤压拉伸效果相关参数
+    [Header("挤压拉伸效果")]
+    [SerializeField] private bool enableSquashStretch = true; // 是否启用挤压拉伸效果
+    [SerializeField] private float squashAmount = 0.3f; // 挤压程度（0-1之间）
+    [SerializeField] private AnimationCurve squashCurve; // 挤压曲线
+    
+    // 原始缩放值（用于恢复）
+    private Vector3 originalScale;
+    
     // 是否正在移动中（防止快速按键导致的问题）
     private bool isMoving = false;
     
@@ -38,6 +53,9 @@ public class PlayerController : MonoBehaviour
     
     void Start()
     {
+        // 保存原始缩放值
+        originalScale = transform.localScale;
+        
         // 订阅输入事件
         SubscribeToInputEvents();
         
@@ -46,6 +64,12 @@ public class PlayerController : MonoBehaviour
         
         // 初始化Billboard相关组件
         InitializeBillboard();
+        
+        // 初始化跳跃曲线
+        InitializeJumpCurve();
+        
+        // 初始化挤压拉伸曲线
+        InitializeSquashCurve();
     }
 
     void Update()
@@ -225,6 +249,10 @@ public class PlayerController : MonoBehaviour
         targetPosition.y += 4.15f;
         targetPosition.z += 3.79f;
         
+        // 记录基础Y坐标（用于跳跃计算）
+        float startY = startPosition.y;
+        float targetY = targetPosition.y;
+        
         float elapsedTime = 0f;
         float actualTransitionTime = transitionTime;
         
@@ -237,16 +265,52 @@ public class PlayerController : MonoBehaviour
         while (elapsedTime < actualTransitionTime)
         {
             elapsedTime += Time.deltaTime;
-            float progress = elapsedTime / actualTransitionTime;
+            float progress = Mathf.Clamp01(elapsedTime / actualTransitionTime);
             
-            // 使用平滑插值
-            transform.position = Vector3.Lerp(startPosition, targetPosition, progress);
+            // 计算基础位置（x, z轴的线性插值）
+            Vector3 currentPosition = Vector3.Lerp(startPosition, targetPosition, progress);
+            
+            // 如果启用跳跃效果，计算跳跃高度
+            if (enableJumpEffect)
+            {
+                // 使用动画曲线计算跳跃偏移
+                float jumpOffset = jumpCurve.Evaluate(progress) * jumpHeight;
+                
+                // 应用跳跃偏移到Y坐标
+                currentPosition.y = Mathf.Lerp(startY, targetY, progress) + jumpOffset;
+            }
+            
+            // 如果启用挤压拉伸效果，计算缩放
+            if (enableSquashStretch)
+            {
+                float squashValue = squashCurve.Evaluate(progress);
+                float scaleY = 1f - (squashValue * squashAmount);
+                
+                // 应用缩放，保持原始的X和Z缩放
+                Vector3 newScale = originalScale;
+                newScale.y = originalScale.y * scaleY;
+                transform.localScale = newScale;
+            }
+            
+            transform.position = currentPosition;
+            
+            // 如果已经完成移动，直接跳出循环
+            if (progress >= 1f)
+            {
+                break;
+            }
             
             yield return null;
         }
         
         // 确保最终位置准确
         transform.position = targetPosition;
+        
+        // 确保缩放恢复到原始值
+        if (enableSquashStretch)
+        {
+            transform.localScale = originalScale;
+        }
         
         // 更新当前坐标和地块
         currentRow = targetBlock.row;
@@ -486,6 +550,87 @@ public class PlayerController : MonoBehaviour
     }
     
     /// <summary>
+    /// 初始化跳跃曲线
+    /// </summary>
+    private void InitializeJumpCurve()
+    {
+        // 如果没有设置跳跃曲线，创建一个默认的抛物线曲线
+        if (jumpCurve == null || jumpCurve.keys.Length == 0)
+        {
+            jumpCurve = new AnimationCurve();
+            
+            // 创建抛物线轨迹：开始0，中间最高，结束0
+            var key1 = new Keyframe(0f, 0f);
+            var key2 = new Keyframe(0.5f, 1f);
+            var key3 = new Keyframe(1f, 0f);
+            
+            // 设置切线为0，确保起点和终点平滑
+            key1.inTangent = 0f;
+            key1.outTangent = 2f;
+            key3.inTangent = -2f;
+            key3.outTangent = 0f;
+            
+            jumpCurve.keys = new Keyframe[] { key1, key2, key3 };
+            
+            Debug.Log("PlayerController: 已创建默认跳跃曲线");
+        }
+        
+        // 验证曲线的起始和结束点
+        float startValue = jumpCurve.Evaluate(0f);
+        float endValue = jumpCurve.Evaluate(1f);
+        
+        if (Mathf.Abs(startValue) > 0.01f || Mathf.Abs(endValue) > 0.01f)
+        {
+            Debug.LogWarning($"PlayerController: 跳跃曲线的起始点({startValue:F3})或结束点({endValue:F3})不为0，可能导致位置偏移");
+        }
+        else
+        {
+            Debug.Log("PlayerController: 跳跃曲线验证通过，起点和终点都为0");
+        }
+    }
+    
+    /// <summary>
+    /// 初始化挤压拉伸曲线
+    /// </summary>
+    private void InitializeSquashCurve()
+    {
+        // 如果没有设置挤压曲线，创建一个默认的挤压效果曲线
+        if (squashCurve == null || squashCurve.keys.Length == 0)
+        {
+            squashCurve = new AnimationCurve();
+            
+            // 创建挤压效果轨迹：
+            // 起跳时压缩 -> 跳跃中拉伸回原状 -> 落地时压缩 -> 最后回原状
+            var key1 = new Keyframe(0f, 1f);      // 起跳瞬间压缩
+            var key2 = new Keyframe(0.15f, 0f);   // 起跳后快速回到正常
+            var key3 = new Keyframe(0.5f, 0f);    // 跳跃中保持正常
+            var key4 = new Keyframe(0.85f, 0f);   // 落地前保持正常
+            var key5 = new Keyframe(0.95f, 1f);   // 落地瞬间压缩
+            var key6 = new Keyframe(1f, 0f);      // 最终回到正常
+            
+            // 设置平滑的切线
+            key1.inTangent = 0f;
+            key1.outTangent = -10f;
+            key2.inTangent = -5f;
+            key2.outTangent = 0f;
+            key3.inTangent = 0f;
+            key3.outTangent = 0f;
+            key4.inTangent = 0f;
+            key4.outTangent = 0f;
+            key5.inTangent = 0f;
+            key5.outTangent = -10f;
+            key6.inTangent = -5f;
+            key6.outTangent = 0f;
+            
+            squashCurve.keys = new Keyframe[] { key1, key2, key3, key4, key5, key6 };
+            
+            Debug.Log("PlayerController: 已创建默认挤压拉伸曲线");
+        }
+        
+        Debug.Log("PlayerController: 挤压拉伸效果初始化完成");
+    }
+    
+    /// <summary>
     /// 初始化Billboard相关组件
     /// </summary>
     private void InitializeBillboard()
@@ -555,6 +700,111 @@ public class PlayerController : MonoBehaviour
     public void SetTargetCamera(Camera camera)
     {
         targetCamera = camera;
+    }
+    
+    /// <summary>
+    /// 设置跳跃效果的启用状态
+    /// </summary>
+    /// <param name="enabled">是否启用跳跃效果</param>
+    public void SetJumpEffectEnabled(bool enabled)
+    {
+        enableJumpEffect = enabled;
+        Debug.Log($"PlayerController: 跳跃效果已{(enabled ? "启用" : "禁用")}");
+    }
+    
+    /// <summary>
+    /// 设置跳跃高度
+    /// </summary>
+    /// <param name="height">跳跃高度</param>
+    public void SetJumpHeight(float height)
+    {
+        jumpHeight = Mathf.Max(0f, height); // 确保高度不为负数
+        Debug.Log($"PlayerController: 跳跃高度设置为 {jumpHeight}");
+    }
+    
+    /// <summary>
+    /// 设置移动过渡时间
+    /// </summary>
+    /// <param name="time">过渡时间</param>
+    public void SetTransitionTime(float time)
+    {
+        transitionTime = Mathf.Max(0.1f, time); // 确保时间不会太小
+        Debug.Log($"PlayerController: 移动过渡时间设置为 {transitionTime}");
+    }
+    
+    /// <summary>
+    /// 获取当前跳跃效果设置
+    /// </summary>
+    public (bool enabled, float height, float transitionTime) GetJumpSettings()
+    {
+        return (enableJumpEffect, jumpHeight, transitionTime);
+    }
+    
+    /// <summary>
+    /// 重置跳跃曲线为默认抛物线
+    /// </summary>
+    public void ResetJumpCurveToDefault()
+    {
+        jumpCurve = new AnimationCurve();
+        
+        var key1 = new Keyframe(0f, 0f);
+        var key2 = new Keyframe(0.5f, 1f);
+        var key3 = new Keyframe(1f, 0f);
+        
+        // 设置切线为0，确保起点和终点平滑
+        key1.inTangent = 0f;
+        key1.outTangent = 2f;
+        key3.inTangent = -2f;
+        key3.outTangent = 0f;
+        
+        jumpCurve.keys = new Keyframe[] { key1, key2, key3 };
+        
+        Debug.Log("PlayerController: 跳跃曲线已重置为默认抛物线");
+    }
+    
+    /// <summary>
+    /// 设置挤压拉伸效果的启用状态
+    /// </summary>
+    /// <param name="enabled">是否启用挤压拉伸效果</param>
+    public void SetSquashStretchEnabled(bool enabled)
+    {
+        enableSquashStretch = enabled;
+        
+        // 如果禁用效果，立即恢复原始缩放
+        if (!enabled)
+        {
+            transform.localScale = originalScale;
+        }
+        
+        Debug.Log($"PlayerController: 挤压拉伸效果已{(enabled ? "启用" : "禁用")}");
+    }
+    
+    /// <summary>
+    /// 设置挤压程度
+    /// </summary>
+    /// <param name="amount">挤压程度（0-1之间）</param>
+    public void SetSquashAmount(float amount)
+    {
+        squashAmount = Mathf.Clamp01(amount);
+        Debug.Log($"PlayerController: 挤压程度设置为 {squashAmount:F2}");
+    }
+    
+    /// <summary>
+    /// 重置挤压拉伸曲线为默认效果
+    /// </summary>
+    public void ResetSquashCurveToDefault()
+    {
+        squashCurve = null; // 清空现有曲线
+        InitializeSquashCurve(); // 重新创建默认曲线
+        Debug.Log("PlayerController: 挤压拉伸曲线已重置为默认效果");
+    }
+    
+    /// <summary>
+    /// 获取当前挤压拉伸效果设置
+    /// </summary>
+    public (bool enabled, float amount) GetSquashStretchSettings()
+    {
+        return (enableSquashStretch, squashAmount);
     }
     
     void OnDestroy()
