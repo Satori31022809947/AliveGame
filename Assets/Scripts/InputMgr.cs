@@ -113,8 +113,19 @@ public class InputMgr : MonoBehaviour
             return false;
         }
         
-        Debug.Log($"Input Succeed {inputType} at beat {currentBeat}");
         lastInputBeat = currentBeat;
+
+        if (inputType == InputType.Interact)
+        {
+            if (BeatMgr.Instance.GetBeatIndex() % 3 != 0)
+            {
+                Debug.Log("Input Interacted 失败，因为不在重拍上");
+                // 交互失败
+                return false;
+            }
+        }
+        
+        Debug.Log($"Input Succeed {inputType} at beat {currentBeat}");
         if (!IsPerfectInput(curTime, currentBeat))
         {
             StartCoroutine(DelayNonPerfectInputActions());

@@ -36,5 +36,8 @@
       "blockType": "Obstacle",
       "movementSpeed": 1.0
     }
+  ],
+  "portalConfigs": [
+    
   ]
-} 
+}

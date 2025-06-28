@@ -62,6 +62,30 @@
         {"row": 5, "col": 12}
       ],
       "interactionType": "Other"
+    },
+    {
+      "itemName": "INTERACT",
+      "coordinates": [
+        {"row": 8, "col": 1},
+        {"row": 8, "col": 2}
+      ],
+      "interactionType": "Interactable"
+    },
+    {
+      "itemName": "INTERACT_SINGLE",
+      "coordinates": [
+        {"row": 7, "col": 5}
+      ],
+      "interactionType": "Interactable"
+    },
+    {
+      "itemName": "INTERACT_TRIPLE",
+      "coordinates": [
+        {"row": 6, "col": 8},
+        {"row": 6, "col": 9},
+        {"row": 6, "col": 10}
+      ],
+      "interactionType": "Interactable"
     }
   ]
 } 
