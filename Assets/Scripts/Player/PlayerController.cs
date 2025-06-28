@@ -118,7 +118,7 @@ public class PlayerController : MonoBehaviour
     void Update()
     {
         //检测危险
-        if (detectDangerous)
+        if (detectDangerous && !hasRememberedPosition)
         {
             if (currentBlock.isDangerous)
             {
