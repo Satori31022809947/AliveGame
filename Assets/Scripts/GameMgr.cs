@@ -112,6 +112,7 @@ public class GameMgr : MonoBehaviour
     private void SubscribeToInputEvents()
     {
         InputMgr.OnInteractFailed += HandleInteractFailed;
+        InputMgr.OnNotPerfectInput += HandleUnperfectInput;
         Debug.Log("GameMgr: 已订阅OnInteractFailed事件");
     }
     
@@ -121,6 +122,7 @@ public class GameMgr : MonoBehaviour
     private void UnsubscribeFromInputEvents()
     {
         InputMgr.OnInteractFailed -= HandleInteractFailed;
+        InputMgr.OnNotPerfectInput -= HandleUnperfectInput;
         Debug.Log("GameMgr: 已取消订阅OnInteractFailed事件");
     }
     
@@ -134,6 +136,23 @@ public class GameMgr : MonoBehaviour
             // 触发0.2秒的屏幕震动
             cameraController.StartShake(0.2f);
             Debug.Log("GameMgr: 交互失败，触发屏幕震动0.2秒");
+        }
+        else
+        {
+            Debug.LogWarning("GameMgr: CameraController为空，无法触发屏幕震动");
+        }
+    }
+    
+    /// <summary>
+    /// 处理不完美input事件，触发屏幕震动
+    /// </summary>
+    private void HandleUnperfectInput()
+    {
+        if (cameraController != null)
+        {
+            // 触发0.2秒的屏幕震动
+            cameraController.StartShake(0.2f, 0.5f);
+            Debug.Log("GameMgr: 不完美Input，触发屏幕震动0.2秒");
         }
         else
         {

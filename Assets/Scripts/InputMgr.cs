@@ -47,6 +47,8 @@ public class InputMgr : MonoBehaviour
     public static event Action OnInteract;
     
     public static event Action OnInteractFailed;
+
+    public static event Action OnNotPerfectInput;
     
     // 输入状态记录
     private InputType lastInput = InputType.None;
@@ -139,7 +141,7 @@ public class InputMgr : MonoBehaviour
             }
         }
 
-        if (isPerfect)
+        if (!isPerfect)
         {
             StartCoroutine(DelayNonPerfectInputActions());
         }
@@ -153,6 +155,7 @@ public class InputMgr : MonoBehaviour
 
     private IEnumerator DelayNonPerfectInputActions()
     {
+        OnNotPerfectInput?.Invoke();
         yield return new WaitForSeconds(0.05f);
         Debug.Log("Not Perfect Input");
         NoiseControlMgr.Instance.AddNoise();
