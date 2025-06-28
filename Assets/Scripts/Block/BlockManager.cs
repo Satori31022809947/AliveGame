@@ -926,7 +926,11 @@ public class BlockManager : MonoBehaviour
         block.itemInstance = itemObject;
         
         // 添加动画效果
-        AddItemAnimation(itemObject);
+        if (block.interactionType == ItemInteractionType.Collectible)
+        {
+            AddItemAnimation(itemObject);
+        }
+        
         
         Debug.Log($"BlockManager: 使用预制体 {itemPrefabPath} 创建道具模型 {config.itemName} (交互类型: {block.interactionType})");
     }
