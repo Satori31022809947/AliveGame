@@ -174,6 +174,11 @@ public class BlockManager : MonoBehaviour
     [SerializeField] private float blockSpacing = 10f;       // 地块间距
     [SerializeField] private Vector3 startPosition = Vector3.zero;  // 起始位置
     
+    [Header("道具配置")]
+    [SerializeField] private bool useCustomItemPrefab = true;  // 是否使用自定义道具预制体
+    [SerializeField] private string itemPrefabPath = "Prefabs/Item";  // 道具预制体在Resources中的路径
+    [SerializeField] private bool allowFallbackToGeometry = true;  // 当预制体加载失败时是否允许回退到基础几何体
+    
     // 矩阵地块数据 - 使用二维数组存储，便于相邻查找
     private BlockData[,] blockMatrix;
     
@@ -575,6 +580,41 @@ public class BlockManager : MonoBehaviour
     }
 
     /// <summary>
+    /// 设置道具预制体路径
+    /// </summary>
+    public void SetItemPrefabPath(string newPath)
+    {
+        itemPrefabPath = newPath;
+        Debug.Log($"BlockManager: 道具预制体路径已更改为 Resources/{newPath}");
+    }
+    
+    /// <summary>
+    /// 启用或禁用自定义道具预制体
+    /// </summary>
+    public void SetUseCustomItemPrefab(bool useCustom)
+    {
+        useCustomItemPrefab = useCustom;
+        Debug.Log($"BlockManager: 自定义道具预制体已{(useCustom ? "启用" : "禁用")}");
+    }
+    
+    /// <summary>
+    /// 设置是否允许回退到基础几何体
+    /// </summary>
+    public void SetAllowFallbackToGeometry(bool allowFallback)
+    {
+        allowFallbackToGeometry = allowFallback;
+        Debug.Log($"BlockManager: 几何体回退已{(allowFallback ? "启用" : "禁用")}");
+    }
+    
+    /// <summary>
+    /// 获取当前道具配置信息
+    /// </summary>
+    public (bool useCustom, string prefabPath, bool allowFallback) GetItemPrefabConfig()
+    {
+        return (useCustomItemPrefab, itemPrefabPath, allowFallbackToGeometry);
+    }
+
+    /// <summary>
     /// 加载地块配置文件
     /// </summary>
     private void LoadBlockConfigurations()
@@ -830,8 +870,36 @@ public class BlockManager : MonoBehaviour
     /// </summary>
     private void CreateSimpleItemInstance(BlockData block, ItemConfig config)
     {
-        // 创建基础几何体作为道具显示
-        GameObject itemObject = CreateItemGeometry(block.interactionType);
+        // 检查是否启用自定义预制体
+        if (!useCustomItemPrefab)
+        {
+            Debug.Log($"BlockManager: 自定义预制体已禁用，使用基础几何体创建道具 {config.itemName}");
+            CreateFallbackItemInstance(block, config);
+            return;
+        }
+        
+        // 从Resources文件夹加载道具预制体
+        GameObject itemPrefab = Resources.Load<GameObject>(itemPrefabPath);
+        
+        if (itemPrefab == null)
+        {
+            string message = $"BlockManager: 无法加载道具预制体 Resources/{itemPrefabPath}";
+            
+            if (allowFallbackToGeometry)
+            {
+                Debug.LogWarning($"{message}，回退到基础几何体");
+                CreateFallbackItemInstance(block, config);
+                return;
+            }
+            else
+            {
+                Debug.LogError($"{message}，且已禁用回退选项");
+                return;
+            }
+        }
+        
+        // 实例化道具预制体
+        GameObject itemObject = Instantiate(itemPrefab);
         
         // 设置位置
         Vector3 itemPosition = block.position + block.itemOffset;
@@ -840,8 +908,8 @@ public class BlockManager : MonoBehaviour
         // 设置名称
         itemObject.name = $"Item_{config.itemName}";
         
-        // TODO:设置美术素材
-        //SetItemAppearance(itemObject, block.interactionType, block.itemType);
+        // 根据交互类型设置道具外观（可选：调整材质、颜色等）
+        SetItemAppearance(itemObject, block.interactionType);
         
         // 保存实例引用
         block.itemInstance = itemObject;
@@ -849,7 +917,34 @@ public class BlockManager : MonoBehaviour
         // 添加动画效果
         AddItemAnimation(itemObject);
         
-        Debug.Log($"BlockManager: 创建道具模型 {config.itemName} (交互类型: {block.interactionType})");
+        Debug.Log($"BlockManager: 使用预制体 {itemPrefabPath} 创建道具模型 {config.itemName} (交互类型: {block.interactionType})");
+    }
+    
+    /// <summary>
+    /// 创建回退道具实例（当预制体加载失败时）
+    /// </summary>
+    private void CreateFallbackItemInstance(BlockData block, ItemConfig config)
+    {
+        // 创建基础几何体作为道具显示
+        GameObject itemObject = CreateItemGeometry(block.interactionType);
+        
+        // 设置位置
+        Vector3 itemPosition = block.position + block.itemOffset;
+        itemObject.transform.position = itemPosition;
+        
+        // 设置名称
+        itemObject.name = $"Item_{config.itemName}_Fallback";
+        
+        // 设置外观
+        SetItemAppearance(itemObject, block.interactionType);
+        
+        // 保存实例引用
+        block.itemInstance = itemObject;
+        
+        // 添加动画效果
+        AddItemAnimation(itemObject);
+        
+        Debug.Log($"BlockManager: 使用回退方式创建道具模型 {config.itemName} (交互类型: {block.interactionType})");
     }
     
     /// <summary>
@@ -887,26 +982,64 @@ public class BlockManager : MonoBehaviour
     /// </summary>
     private void SetItemAppearance(GameObject itemObject, ItemInteractionType interactionType)
     {
-        Renderer renderer = itemObject.GetComponent<Renderer>();
-        if (renderer == null) return;
+        // 查找道具对象及其子物体中的所有Renderer组件
+        Renderer[] renderers = itemObject.GetComponentsInChildren<Renderer>();
+        
+        if (renderers.Length == 0)
+        {
+            Debug.LogWarning($"BlockManager: 道具 {itemObject.name} 中未找到Renderer组件，无法设置外观");
+            return;
+        }
         
         // 根据交互类型设置基础颜色
-        Color baseColor = Color.white;
+        Color baseColor = GetInteractionTypeColor(interactionType);
+        
+        // 为所有Renderer组件设置颜色
+        foreach (Renderer renderer in renderers)
+        {
+            if (renderer.material != null)
+            {
+                // 尝试设置主颜色
+                if (renderer.material.HasProperty("_Color"))
+                {
+                    renderer.material.color = baseColor;
+                }
+                // 如果支持BaseColor属性（URP/HDRP）
+                else if (renderer.material.HasProperty("_BaseColor"))
+                {
+                    renderer.material.SetColor("_BaseColor", baseColor);
+                }
+                // 如果支持Albedo属性（某些自定义Shader）
+                else if (renderer.material.HasProperty("_Albedo"))
+                {
+                    renderer.material.SetColor("_Albedo", baseColor);
+                }
+                else
+                {
+                    Debug.LogWarning($"BlockManager: 道具 {itemObject.name} 的材质不支持颜色设置");
+                }
+            }
+        }
+        
+        Debug.Log($"BlockManager: 为道具 {itemObject.name} 设置了 {interactionType} 类型的外观");
+    }
+    
+    /// <summary>
+    /// 根据交互类型获取对应颜色
+    /// </summary>
+    private Color GetInteractionTypeColor(ItemInteractionType interactionType)
+    {
         switch (interactionType)
         {
             case ItemInteractionType.Collectible:
-                baseColor = Color.yellow;  // 可拾取道具用黄色
-                break;
+                return Color.yellow;    // 可拾取道具用黄色
             case ItemInteractionType.Interactable:
-                baseColor = Color.blue;    // 可交互道具用蓝色
-                break;
+                return Color.blue;      // 可交互道具用蓝色
             case ItemInteractionType.Other:
-                baseColor = Color.gray;    // 其他道具用灰色
-                break;
+                return Color.gray;      // 其他道具用灰色
+            default:
+                return Color.white;     // 默认白色
         }
-        
-        
-        renderer.material.color = baseColor;
     }
     
     /// <summary>
