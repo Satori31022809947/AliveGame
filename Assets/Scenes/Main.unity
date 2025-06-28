@@ -642,6 +642,10 @@ MonoBehaviour:
   LosePage: {fileID: 1792973808}
   WinPage: {fileID: 39025440}
   PerfectWinPage: {fileID: 1461182668}
+  winPositions:
+  - {x: 0, y: 11}
+  - {x: 0, y: 12}
+  - {x: 0, y: 13}
   enableDelayTime: 1090
   BeatLimit: 200
 --- !u!4 &662386541
