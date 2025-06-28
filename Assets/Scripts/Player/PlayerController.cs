@@ -29,6 +29,13 @@ public class PlayerController : MonoBehaviour
     //是否开始判断危险
     public bool detectDangerous = false;
     
+    // Billboard效果相关
+    [Header("Billboard效果")]
+    [SerializeField] private Transform planeTransform; // plane子物体的Transform
+    [SerializeField] private Camera targetCamera; // 目标相机，如果为null则使用Camera.main
+    [SerializeField] private bool billboardEnabled = true; // 是否启用Billboard效果
+    [SerializeField] private bool onlyYAxis = false; // 是否只在Y轴上旋转
+    
     void Start()
     {
         // 订阅输入事件
@@ -36,6 +43,9 @@ public class PlayerController : MonoBehaviour
         
         // 延迟一帧确保BlockManager已经初始化
         StartCoroutine(InitializePlayerPosition());
+        
+        // 初始化Billboard相关组件
+        InitializeBillboard();
     }
 
     void Update()
@@ -49,6 +59,9 @@ public class PlayerController : MonoBehaviour
                 Debug.Log("player in dangerous!!!");
             }
         }
+        
+        // 更新Billboard效果
+        UpdateBillboard();
     }
     
     /// <summary>
@@ -186,7 +199,8 @@ public class PlayerController : MonoBehaviour
             
             Vector3 targetPosition = targetBlock.position;
             // 设置Y坐标稍微高一点，避免嵌入地块
-            targetPosition.y += 5.68f;
+            targetPosition.y += 4.15f;
+            targetPosition.z += 3.79f;
             transform.position = targetPosition;
             
             Debug.Log($"玩家移动到矩阵位置: ({row}, {col}) - {targetBlock.blockName}");
@@ -208,7 +222,8 @@ public class PlayerController : MonoBehaviour
         Vector3 startPosition = transform.position;
         Vector3 targetPosition = targetBlock.position;
         // 设置Y坐标稍微高一点，避免嵌入地块
-        targetPosition.y += 5.68f;
+        targetPosition.y += 4.15f;
+        targetPosition.z += 3.79f;
         
         float elapsedTime = 0f;
         float actualTransitionTime = transitionTime;
@@ -470,7 +485,77 @@ public class PlayerController : MonoBehaviour
         return true;
     }
     
+    /// <summary>
+    /// 初始化Billboard相关组件
+    /// </summary>
+    private void InitializeBillboard()
+    {
+        // 如果没有手动指定plane，直接获取第一个子物体
+        if (planeTransform == null)
+        {
+            if (transform.childCount > 0)
+            {
+                planeTransform = transform.GetChild(0);
+                Debug.Log("PlayerController: 自动获取第一个子物体作为plane");
+            }
+            else
+            {
+                Debug.LogWarning("PlayerController: 没有找到子物体");
+            }
+        }
+        
+        // 如果没有指定相机，使用主相机
+        if (targetCamera == null)
+        {
+            targetCamera = Camera.main;
+            if (targetCamera == null)
+            {
+                Debug.LogWarning("PlayerController: 未找到主相机，Billboard效果可能无法正常工作");
+            }
+        }
+    }
     
+    /// <summary>
+    /// 更新Billboard效果，让plane垂直于相机
+    /// </summary>
+    private void UpdateBillboard()
+    {
+        if (!billboardEnabled || planeTransform == null || targetCamera == null)
+            return;
+            
+        Vector3 cameraForward = targetCamera.transform.forward;
+        
+        if (onlyYAxis)
+        {
+            // 只在Y轴上旋转（常用于UI元素或地面物体）
+            cameraForward.y = 0;
+            cameraForward.Normalize();
+        }
+        
+        if (cameraForward != Vector3.zero)
+        {
+            // 让plane的up向量与相机的forward向量反向对齐，使plane正面垂直于相机视线
+            planeTransform.up = -cameraForward;
+        }
+    }
+    
+    /// <summary>
+    /// 设置Billboard效果的启用状态
+    /// </summary>
+    /// <param name="enabled">是否启用</param>
+    public void SetBillboardEnabled(bool enabled)
+    {
+        billboardEnabled = enabled;
+    }
+    
+    /// <summary>
+    /// 设置目标相机
+    /// </summary>
+    /// <param name="camera">目标相机</param>
+    public void SetTargetCamera(Camera camera)
+    {
+        targetCamera = camera;
+    }
     
     void OnDestroy()
     {
