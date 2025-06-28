@@ -38,7 +38,7 @@
       "isDangerous": true,
       "blockType": "Obstacle",
       "movementSpeed": 1.0,
-      "isWalkable": false
+      "isWalkable": true
     }
   ]
 } 

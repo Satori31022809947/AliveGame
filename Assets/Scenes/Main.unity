@@ -536,7 +536,7 @@ Camera:
     height: 1
   near clip plane: 0.3
   far clip plane: 1000
-  field of view: 60
+  field of view: 40
   orthographic: 0
   orthographic size: 5
   m_Depth: -1
@@ -562,13 +562,13 @@ Transform:
   m_PrefabAsset: {fileID: 0}
   m_GameObject: {fileID: 519420028}
   serializedVersion: 2
-  m_LocalRotation: {x: 0.2962081, y: 0, z: 0, w: 0.9551234}
-  m_LocalPosition: {x: 3.23, y: 10.9, z: -20.9}
+  m_LocalRotation: {x: 0.37209696, y: 0, z: 0, w: 0.92819387}
+  m_LocalPosition: {x: 15, y: 27, z: -51}
   m_LocalScale: {x: 1, y: 1, z: 1}
   m_ConstrainProportionsScale: 0
   m_Children: []
   m_Father: {fileID: 0}
-  m_LocalEulerAnglesHint: {x: 34.46, y: 0, z: 0}
+  m_LocalEulerAnglesHint: {x: 43.69, y: 0, z: 0}
 --- !u!114 &519420033
 MonoBehaviour:
   m_ObjectHideFlags: 0
@@ -767,6 +767,9 @@ MonoBehaviour:
   autoGenerateBlocks: 1
   blockSpacing: 10
   startPosition: {x: 0, y: 0, z: 0}
+  useCustomItemPrefab: 1
+  itemPrefabPath: Prefabs/Item
+  allowFallbackToGeometry: 1
   playerMoveTargets: 
   showDebugInfo: 1
 --- !u!1 &1347488807 stripped

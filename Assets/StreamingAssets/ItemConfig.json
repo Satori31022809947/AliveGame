@@ -1,26 +1,32 @@
 {
   "itemConfigs": [
     {
-      "itemName": "Eye",
-      "coordinates": [
-        {"row": 0, "col": 1}
-      ],
-      "interactionType": "Collectible"
-    },
-    {
       "itemName": "Hair",
       "coordinates": [
-        {"row": 1, "col": 0},
-        {"row": 1, "col": 1}
+        {"row": 4, "col": 0}
       ],
       "interactionType": "Collectible"
     },
     {
-      "itemName": "华丽衣服",
+      "itemName": "Eye",
       "coordinates": [
-        {"row": 0, "col": 0}
+        {"row": 5, "col": 9}
       ],
-      "interactionType": "Interactable"
+      "interactionType": "Collectible"
+    },
+    {
+      "itemName": "Arm",
+      "coordinates": [
+        {"row": 0, "col": 11}
+      ],
+      "interactionType": "Collectible"
+    },
+    {
+      "itemName": "Cloths",
+      "coordinates": [
+        {"row": 6, "col": 15}
+      ],
+      "interactionType": "Collectible"
     }
   ]
 } 
