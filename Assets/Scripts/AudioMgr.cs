@@ -66,11 +66,11 @@ public class AudioMgr : MonoBehaviour
         backgroundMusicSource.Stop();
     }
 
-    public void PlaySoundEffect(SoundEffectType type)
+    public void PlaySoundEffect(SoundEffectType type, float volumeScale = 1f)
     {
         if (clipDictionary.ContainsKey(type) && clipDictionary[type] != null)
         {
-            soundEffectSource.PlayOneShot(clipDictionary[type]);
+            soundEffectSource.PlayOneShot(clipDictionary[type], volumeScale);
         }
     }
 }

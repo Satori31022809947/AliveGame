@@ -1,4 +1,5 @@
 using System;
+using System.Collections;
 using System.Collections.Generic;
 using System.IO;
 using Unity.Mathematics;
@@ -133,13 +134,24 @@ public class BeatMgr : MonoBehaviour
                 break;
             case BeatType.Warning:
                 Debug.Log("BeatMgr: OnBeat: Warning");
-                AudioMgr.Instance.PlaySoundEffect(SoundEffectType.Warning);
                 break;
             case BeatType.None:
                 playerController.detectDangerous = false;
                 break;
         }   
         beatUI.UpdateBeatUI(beatIndex, beatType);
+        beatType = GetBeatType(beatIndex + 1);
+        if (beatType == BeatType.Warning)
+        {
+            StartCoroutine(DelayPlayWarningSound());
+        }
+    }
+
+    private IEnumerator DelayPlayWarningSound()
+    {
+        yield return new WaitForSeconds(0.3f);
+        NoiseControlMgr.Instance.AddNoise();
+        AudioMgr.Instance.PlaySoundEffect(SoundEffectType.Warning, 2f);
     }
 
     public BeatType GetBeatType(int beatIndex)
