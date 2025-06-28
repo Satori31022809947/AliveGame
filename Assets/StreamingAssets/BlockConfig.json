@@ -1,0 +1,44 @@
+{
+  "blockConfigs": [
+    {
+      "row": 0,
+      "column": 0,
+      "isDangerous": false,
+      "blockType": "Normal",
+      "movementSpeed": 1.0,
+      "isWalkable": true
+    },
+    {
+      "row": 0,
+      "column": 1,
+      "isDangerous": true,
+      "blockType": "Speed",
+      "movementSpeed": 1.5,
+      "isWalkable": true
+    },
+    {
+      "row": 1,
+      "column": 0,
+      "isDangerous": true,
+      "blockType": "Slow",
+      "movementSpeed": 0.5,
+      "isWalkable": true
+    },
+    {
+      "row": 1,
+      "column": 1,
+      "isDangerous": false,
+      "blockType": "Normal",
+      "movementSpeed": 1.0,
+      "isWalkable": true
+    },
+    {
+      "row": 2,
+      "column": 2,
+      "isDangerous": true,
+      "blockType": "Obstacle",
+      "movementSpeed": 1.0,
+      "isWalkable": false
+    }
+  ]
+} 

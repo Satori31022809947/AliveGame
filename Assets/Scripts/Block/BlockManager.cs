@@ -116,6 +116,29 @@ public class ItemConfigFile
 }
 
 /// <summary>
+/// 地块配置数据结构（用于JSON反序列化）
+/// </summary>
+[System.Serializable]
+public class BlockConfig
+{
+    public int row;                        // 行坐标
+    public int column;                     // 列坐标
+    public bool isDangerous = false;        // 是否危险
+    public string blockType = "Normal";    // 地块类型（可选）
+    public float movementSpeed = 1f;       // 移动速度修正（可选）
+    public bool isWalkable = true;         // 是否可行走（可选）
+}
+
+/// <summary>
+/// 地块配置文件结构
+/// </summary>
+[System.Serializable]
+public class BlockConfigFile
+{
+    public BlockConfig[] blockConfigs;
+}
+
+/// <summary>
 /// 统一的地块管理器 - 单例模式
 /// </summary>
 public class BlockManager : MonoBehaviour
@@ -145,6 +168,12 @@ public class BlockManager : MonoBehaviour
     [SerializeField] private int rows = 2;           // 行数 (n)
     [SerializeField] private int columns = 2;        // 列数 (m)
     
+    [Header("地块生成配置")]
+    [SerializeField] private GameObject blockPrefab;      // 地块预制体
+    [SerializeField] private bool autoGenerateBlocks = true;  // 是否自动生成地块
+    [SerializeField] private float blockSpacing = 10f;       // 地块间距
+    [SerializeField] private Vector3 startPosition = Vector3.zero;  // 起始位置
+    
     // 矩阵地块数据 - 使用二维数组存储，便于相邻查找
     private BlockData[,] blockMatrix;
     
@@ -153,6 +182,9 @@ public class BlockManager : MonoBehaviour
     
     // 调试用 - 在编辑器中显示地块信息
     [SerializeField] private bool showDebugInfo = true;
+    
+    // 地块配置数据
+    private Dictionary<string, BlockConfig> blockConfigs = new Dictionary<string, BlockConfig>();
 
     void Awake()
     {
@@ -172,8 +204,22 @@ public class BlockManager : MonoBehaviour
     {
         // 初始化矩阵
         InitializeMatrix();
-        // 自动发现场景中的所有地块
-        DiscoverAllBlocks();
+        
+        // 加载地块配置
+        LoadBlockConfigurations();
+        
+        // 根据配置选择地块初始化方式
+        if (autoGenerateBlocks && blockPrefab != null)
+        {
+            // 自动生成地块
+            GenerateBlocksFromPrefab();
+        }
+        else
+        {
+            // 自动发现场景中的所有地块
+            DiscoverAllBlocks();
+        }
+        
         // 加载并应用道具配置
         LoadItemConfigurations();
     }
@@ -184,6 +230,71 @@ public class BlockManager : MonoBehaviour
     private void InitializeMatrix()
     {
         blockMatrix = new BlockData[rows, columns];
+    }
+
+    /// <summary>
+    /// 根据预制体自动生成并排列地块
+    /// </summary>
+    private void GenerateBlocksFromPrefab()
+    {
+        // 清空现有地块列表
+        blocks.Clear();
+        
+        // 清理现有的子物体（如果有的话）
+        for (int i = transform.childCount - 1; i >= 0; i--)
+        {
+            if (Application.isPlaying)
+            {
+                Destroy(transform.GetChild(i).gameObject);
+            }
+            else
+            {
+                DestroyImmediate(transform.GetChild(i).gameObject);
+            }
+        }
+        
+        Debug.Log($"BlockManager: 开始自动生成 {rows}×{columns} 的地块矩阵");
+        
+        // 按矩阵顺序生成地块
+        for (int row = 0; row < rows; row++)
+        {
+            for (int col = 0; col < columns; col++)
+            {
+                // 计算地块位置
+                Vector3 blockPosition = CalculateBlockPosition(row, col);
+                
+                // 实例化地块
+                GameObject newBlock = Instantiate(blockPrefab, blockPosition, Quaternion.identity, transform);
+                
+                // 设置地块名称
+                newBlock.name = $"Block_({row},{col})";
+                
+                // 添加到地块列表
+                blocks.Add(newBlock);
+                
+                // 计算地块ID（线性索引）
+                int blockId = row * columns + col;
+                
+                // 注册到矩阵系统
+                RegisterBlockToMatrix(blockId, newBlock.transform, BlockType.Normal, row, col);
+                
+                Debug.Log($"BlockManager: 创建地块 [{blockId}] ({row},{col}) 位置: {blockPosition}");
+            }
+        }
+        
+        Debug.Log($"BlockManager: 成功自动生成了 {blocks.Count} 个地块");
+    }
+    
+    /// <summary>
+    /// 计算指定行列的地块世界坐标
+    /// </summary>
+    private Vector3 CalculateBlockPosition(int row, int col)
+    {
+        float x = startPosition.x + col * blockSpacing;      // 列向右（X正方向）
+        float y = startPosition.y;                           // Y坐标保持不变
+        float z = startPosition.z - row * blockSpacing;      // 行向后（Z负方向）
+        
+        return new Vector3(x, y, z);
     }
 
     /// <summary>
@@ -244,6 +355,9 @@ public class BlockManager : MonoBehaviour
 
             blocks[blockId].GetComponent<BlockController>().blockData = newBlock;
             blockMatrix[row, col] = newBlock;
+            
+            // 应用地块配置到地块数据
+            ApplyBlockConfig(newBlock, row, col);
         }
     }
 
@@ -363,6 +477,205 @@ public class BlockManager : MonoBehaviour
     public (int rows, int columns) GetMatrixSize()
     {
         return (rows, columns);
+    }
+    
+    /// <summary>
+    /// 手动重新生成地块（可在编辑器中调用）
+    /// </summary>
+    [ContextMenu("重新生成地块")]
+    public void RegenerateBlocks()
+    {
+        if (blockPrefab == null)
+        {
+            Debug.LogError("BlockManager: 无法重新生成地块，blockPrefab为空！");
+            return;
+        }
+        
+        // 重新初始化矩阵
+        InitializeMatrix();
+        
+        // 生成地块
+        GenerateBlocksFromPrefab();
+        
+        Debug.Log("BlockManager: 手动重新生成地块完成");
+    }
+    
+    /// <summary>
+    /// 设置矩阵大小（会触发重新生成）
+    /// </summary>
+    public void SetMatrixSize(int newRows, int newColumns)
+    {
+        rows = newRows;
+        columns = newColumns;
+        
+        if (autoGenerateBlocks && blockPrefab != null && Application.isPlaying)
+        {
+            RegenerateBlocks();
+        }
+    }
+    
+    /// <summary>
+    /// 设置地块间距（会触发重新生成）
+    /// </summary>
+    public void SetBlockSpacing(float newSpacing)
+    {
+        blockSpacing = newSpacing;
+        
+        if (autoGenerateBlocks && blockPrefab != null && Application.isPlaying)
+        {
+            RegenerateBlocks();
+        }
+    }
+    
+    /// <summary>
+    /// 设置起始位置（会触发重新生成）
+    /// </summary>
+    public void SetStartPosition(Vector3 newStartPosition)
+    {
+        startPosition = newStartPosition;
+        
+        if (autoGenerateBlocks && blockPrefab != null && Application.isPlaying)
+        {
+            RegenerateBlocks();
+        }
+    }
+    
+    /// <summary>
+    /// 重新加载地块配置文件（可在运行时调用）
+    /// </summary>
+    [ContextMenu("重新加载地块配置")]
+    public void ReloadBlockConfigurations()
+    {
+        // 重新加载配置
+        LoadBlockConfigurations();
+        
+        // 重新应用到所有已存在的地块
+        for (int row = 0; row < rows; row++)
+        {
+            for (int col = 0; col < columns; col++)
+            {
+                BlockData block = GetBlockAt(row, col);
+                if (block != null)
+                {
+                    ApplyBlockConfig(block, row, col);
+                }
+            }
+        }
+        
+        Debug.Log("BlockManager: 重新加载地块配置完成");
+    }
+    
+    /// <summary>
+    /// 获取指定地块的配置信息（用于调试）
+    /// </summary>
+    public BlockConfig GetBlockConfig(int row, int col)
+    {
+        string key = GetBlockConfigKey(row, col);
+        return blockConfigs.ContainsKey(key) ? blockConfigs[key] : null;
+    }
+
+    /// <summary>
+    /// 加载地块配置文件
+    /// </summary>
+    private void LoadBlockConfigurations()
+    {
+        string configPath = Path.Combine(Application.streamingAssetsPath, "BlockConfig.json");
+        
+        Debug.Log($"BlockManager: 尝试加载地块配置文件: {configPath}");
+        
+        if (File.Exists(configPath))
+        {
+            try
+            {
+                string jsonContent = File.ReadAllText(configPath);
+                
+                BlockConfigFile configFile = JsonUtility.FromJson<BlockConfigFile>(jsonContent);
+                
+                if (configFile == null)
+                {
+                    Debug.LogError("BlockManager: JSON反序列化失败，configFile为null");
+                    return;
+                }
+                
+                if (configFile.blockConfigs == null)
+                {
+                    Debug.LogError("BlockManager: blockConfigs数组为null");
+                    return;
+                }
+                
+                Debug.Log($"BlockManager: 成功加载地块配置，共 {configFile.blockConfigs.Length} 个地块");
+                
+                // 清空现有配置
+                blockConfigs.Clear();
+                
+                // 将配置存储到字典中，以"row,column"为键
+                for (int i = 0; i < configFile.blockConfigs.Length; i++)
+                {
+                    var blockConfig = configFile.blockConfigs[i];
+                    string key = GetBlockConfigKey(blockConfig.row, blockConfig.column);
+                    blockConfigs[key] = blockConfig;
+                    
+                    Debug.Log($"BlockManager: 加载地块配置 ({blockConfig.row},{blockConfig.column}) - 危险: {blockConfig.isDangerous}");
+                }
+            }
+            catch (System.Exception e)
+            {
+                Debug.LogError($"BlockManager: 加载地块配置失败 - {e.Message}");
+                Debug.LogError($"StackTrace: {e.StackTrace}");
+            }
+        }
+        else
+        {
+            Debug.LogWarning($"BlockManager: 地块配置文件不存在: {configPath}");
+        }
+    }
+    
+    /// <summary>
+    /// 生成地块配置字典的键
+    /// </summary>
+    private string GetBlockConfigKey(int row, int column)
+    {
+        return $"{row},{column}";
+    }
+    
+    /// <summary>
+    /// 应用单个地块配置到指定地块
+    /// </summary>
+    private void ApplyBlockConfig(BlockData blockData, int row, int col)
+    {
+        string key = GetBlockConfigKey(row, col);
+        
+        if (blockConfigs.ContainsKey(key))
+        {
+            BlockConfig config = blockConfigs[key];
+            
+            // 应用配置到地块数据
+            blockData.isDangerous = config.isDangerous;
+            blockData.isWalkable = config.isWalkable;
+            blockData.movementSpeed = config.movementSpeed;
+            
+            // 解析并设置地块类型
+            switch (config.blockType.ToLower())
+            {
+                case "speed":
+                    blockData.blockType = BlockType.Speed;
+                    break;
+                case "slow":
+                    blockData.blockType = BlockType.Slow;
+                    break;
+                case "teleport":
+                    blockData.blockType = BlockType.Teleport;
+                    break;
+                case "obstacle":
+                    blockData.blockType = BlockType.Obstacle;
+                    break;
+                default:
+                    blockData.blockType = BlockType.Normal;
+                    break;
+            }
+            
+            Debug.Log($"BlockManager: 应用地块配置到 ({row},{col}) - 危险: {config.isDangerous}, 类型: {blockData.blockType}");
+        }
     }
     
     /// <summary>
