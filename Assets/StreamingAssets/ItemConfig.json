@@ -2,9 +2,9 @@
   "itemConfigs": [
     {
       "blockId": 1,
-      "itemType": "Coin",
+      "itemType": "Eye",
       "itemValue": 10,
-      "itemName": "金币",
+      "itemName": "纽扣眼睛",
       "prefabPath": "Prefabs/Item",
       "position": [0, 1, 0],
       "rotation": [0, 0, 0],

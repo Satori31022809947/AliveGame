@@ -19,10 +19,6 @@ public class PlayerController : MonoBehaviour
     
     // 道具收集统计
     [Header("道具系统")]
-    [SerializeField] private int totalCoins = 0;
-    [SerializeField] private int totalGems = 0;
-    [SerializeField] private int totalKeys = 0;
-    [SerializeField] private int totalPotions = 0;
     [SerializeField] private List<string> collectedItemNames = new List<string>();
     
     // 道具拾取音效和特效
@@ -355,30 +351,6 @@ public class PlayerController : MonoBehaviour
     {
         // 添加到收集清单
         collectedItemNames.Add(itemName);
-        
-        // 根据道具类型更新对应计数
-        switch (itemType)
-        {
-            case ItemType.Coin:
-                totalCoins += itemValue;
-                Debug.Log($"金币 +{itemValue}，总数: {totalCoins}");
-                break;
-                
-            case ItemType.Gem:
-                totalGems += itemValue;
-                Debug.Log($"宝石 +{itemValue}，总数: {totalGems}");
-                break;
-                
-            case ItemType.Key:
-                totalKeys += itemValue;
-                Debug.Log($"钥匙 +{itemValue}，总数: {totalKeys}");
-                break;
-                
-            case ItemType.Potion:
-                totalPotions += itemValue;
-                Debug.Log($"药水 +{itemValue}，总数: {totalPotions}");
-                break;
-        }
     }
     
     /// <summary>
@@ -409,14 +381,6 @@ public class PlayerController : MonoBehaviour
     }
     
     /// <summary>
-    /// 获取玩家道具统计
-    /// </summary>
-    public (int coins, int gems, int keys, int potions) GetItemStats()
-    {
-        return (totalCoins, totalGems, totalKeys, totalPotions);
-    }
-    
-    /// <summary>
     /// 获取已收集道具列表
     /// </summary>
     public List<string> GetCollectedItems()
@@ -429,10 +393,6 @@ public class PlayerController : MonoBehaviour
     /// </summary>
     public void ResetItemStats()
     {
-        totalCoins = 0;
-        totalGems = 0;
-        totalKeys = 0;
-        totalPotions = 0;
         collectedItemNames.Clear();
         
         Debug.Log("PlayerController: 道具统计已重置");
@@ -443,50 +403,24 @@ public class PlayerController : MonoBehaviour
     /// </summary>
     public bool HasItem(ItemType itemType, int requiredAmount = 1)
     {
-        switch (itemType)
-        {
-            case ItemType.Coin:
-                return totalCoins >= requiredAmount;
-            case ItemType.Gem:
-                return totalGems >= requiredAmount;
-            case ItemType.Key:
-                return totalKeys >= requiredAmount;
-            case ItemType.Potion:
-                return totalPotions >= requiredAmount;
-            default:
-                return false;
-        }
+        //TODO:item 收集判断
+        // switch (itemType)
+        // {
+        //     case ItemType.Eye:
+        //         return totalCoins >= requiredAmount;
+        //     case ItemType.Gem:
+        //         return totalGems >= requiredAmount;
+        //     case ItemType.Key:
+        //         return totalKeys >= requiredAmount;
+        //     case ItemType.Potion:
+        //         return totalPotions >= requiredAmount;
+        //     default:
+        //         return false;
+        // }
+        return true;
     }
     
-    /// <summary>
-    /// 消耗道具
-    /// </summary>
-    public bool ConsumeItem(ItemType itemType, int amount = 1)
-    {
-        if (!HasItem(itemType, amount)) return false;
-        
-        switch (itemType)
-        {
-            case ItemType.Coin:
-                totalCoins -= amount;
-                Debug.Log($"消耗了 {amount} 个金币，剩余: {totalCoins}");
-                return true;
-            case ItemType.Gem:
-                totalGems -= amount;
-                Debug.Log($"消耗了 {amount} 个宝石，剩余: {totalGems}");
-                return true;
-            case ItemType.Key:
-                totalKeys -= amount;
-                Debug.Log($"消耗了 {amount} 个钥匙，剩余: {totalKeys}");
-                return true;
-            case ItemType.Potion:
-                totalPotions -= amount;
-                Debug.Log($"消耗了 {amount} 个药水，剩余: {totalPotions}");
-                return true;
-            default:
-                return false;
-        }
-    }
+    
     
     void OnDestroy()
     {

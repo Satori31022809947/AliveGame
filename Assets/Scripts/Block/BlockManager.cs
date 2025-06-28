@@ -71,10 +71,10 @@ public enum Direction
 public enum ItemType
 {
     None,        // 无道具
-    Coin,        // 金币
-    Gem,         // 宝石
-    Key,         // 钥匙
-    Potion       // 药水
+    Eye,        // 纽扣眼睛
+    Hair,         // 头发
+    Arm,         // 一条胳膊
+    Cloth       // 衣服
 }
 
 /// <summary>
@@ -508,26 +508,26 @@ public class BlockManager : MonoBehaviour
         fallbackItem.transform.position = block.position + block.itemOffset;
         fallbackItem.transform.localScale = Vector3.one * 0.3f;
         
-        // 根据道具类型设置颜色
+        // TODO：根据道具类型设置素材
         Renderer renderer = fallbackItem.GetComponent<Renderer>();
-        switch (block.itemType)
-        {
-            case ItemType.Coin:
-                renderer.material.color = Color.yellow;
-                break;
-            case ItemType.Gem:
-                renderer.material.color = Color.blue;
-                break;
-            case ItemType.Key:
-                renderer.material.color = Color.red;
-                break;
-            case ItemType.Potion:
-                renderer.material.color = Color.green;
-                break;
-            default:
-                renderer.material.color = Color.white;
-                break;
-        }
+        // switch (block.itemType)
+        // {
+        //     case ItemType.Coin:
+        //         renderer.material.color = Color.yellow;
+        //         break;
+        //     case ItemType.Gem:
+        //         renderer.material.color = Color.blue;
+        //         break;
+        //     case ItemType.Key:
+        //         renderer.material.color = Color.red;
+        //         break;
+        //     case ItemType.Potion:
+        //         renderer.material.color = Color.green;
+        //         break;
+        //     default:
+        //         
+        //         break;
+        // }
         
         fallbackItem.name = $"FallbackItem_{config.itemName}_Block{config.blockId}";
         block.itemInstance = fallbackItem;
