@@ -34,7 +34,7 @@ public class InputMgr : MonoBehaviour
         }
     }
 
-    private bool m_enable = true; // 默认启用输入
+    private bool m_enable = false; // 默认不启用输入
     
     // 事件声明 - 当检测到输入时触发
     public static event Action<InputType> OnInputDetected;
