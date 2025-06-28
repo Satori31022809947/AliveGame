@@ -646,7 +646,7 @@ MonoBehaviour:
   - {x: 0, y: 11}
   - {x: 0, y: 12}
   - {x: 0, y: 13}
-  enableDelayTime: 1090
+  enableDelayTime: 58
   BeatLimit: 200
 --- !u!4 &662386541
 Transform:
@@ -973,6 +973,11 @@ RectTransform:
   m_CorrespondingSourceObject: {fileID: 2993687574962393443, guid: 36b50f16e650d2c47bd75ae778189919, type: 3}
   m_PrefabInstance: {fileID: 4225684478640203830}
   m_PrefabAsset: {fileID: 0}
+--- !u!82 &1876281333 stripped
+AudioSource:
+  m_CorrespondingSourceObject: {fileID: 8653276311058012846, guid: c583ef51f383cd94fabe57a9ecddcff7, type: 3}
+  m_PrefabInstance: {fileID: 2110765438348541360}
+  m_PrefabAsset: {fileID: 0}
 --- !u!1 &1939973009
 GameObject:
   m_ObjectHideFlags: 0
@@ -1169,6 +1174,34 @@ PrefabInstance:
     - target: {fileID: 2040478867108528304, guid: c583ef51f383cd94fabe57a9ecddcff7, type: 3}
       propertyPath: m_LocalEulerAnglesHint.z
       value: 0
+      objectReference: {fileID: 0}
+    - target: {fileID: 8891552689843735287, guid: c583ef51f383cd94fabe57a9ecddcff7, type: 3}
+      propertyPath: backgroundMusic
+      value: 
+      objectReference: {fileID: 8300000, guid: a5c61a992ba3d5d498d17749f2497000, type: 3}
+    - target: {fileID: 8891552689843735287, guid: c583ef51f383cd94fabe57a9ecddcff7, type: 3}
+      propertyPath: soundEffectSource
+      value: 
+      objectReference: {fileID: 1876281333}
+    - target: {fileID: 8891552689843735287, guid: c583ef51f383cd94fabe57a9ecddcff7, type: 3}
+      propertyPath: soundEffectClips.Array.size
+      value: 3
+      objectReference: {fileID: 0}
+    - target: {fileID: 8891552689843735287, guid: c583ef51f383cd94fabe57a9ecddcff7, type: 3}
+      propertyPath: soundEffectClips.Array.data[0].clip
+      value: 
+      objectReference: {fileID: 8300000, guid: b3c2e2f231d861a4390436397154b459, type: 3}
+    - target: {fileID: 8891552689843735287, guid: c583ef51f383cd94fabe57a9ecddcff7, type: 3}
+      propertyPath: soundEffectClips.Array.data[1].clip
+      value: 
+      objectReference: {fileID: 8300000, guid: f0bbd0df5fc996c43a7af9545cb0c84f, type: 3}
+    - target: {fileID: 8891552689843735287, guid: c583ef51f383cd94fabe57a9ecddcff7, type: 3}
+      propertyPath: soundEffectClips.Array.data[1].type
+      value: 1
+      objectReference: {fileID: 0}
+    - target: {fileID: 8891552689843735287, guid: c583ef51f383cd94fabe57a9ecddcff7, type: 3}
+      propertyPath: soundEffectClips.Array.data[2].type
+      value: 2
       objectReference: {fileID: 0}
     m_RemovedComponents: []
     m_RemovedGameObjects: []
