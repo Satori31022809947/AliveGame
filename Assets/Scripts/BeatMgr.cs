@@ -115,7 +115,6 @@ public class BeatMgr : MonoBehaviour
     private void OnBeat()
     {
         // 每拍调用的函数，内容留空，可按需实现
-        Debug.Log("BeatMgr: OnBeat");
         // 一拍结束时候的处理
         NoiseControlMgr.Instance.OnBeatFinish(GetBeatType(beatIndex));
         beatIndex++;

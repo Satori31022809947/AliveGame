@@ -66,6 +66,29 @@ public class PlayerController : MonoBehaviour
     [Header("传送效果")]
     [SerializeField] private float teleportShrinkFactor = 0.1f; // 传送时缩小的比例
     [SerializeField] private float teleportAnimationTime = 0.2f; // 传送动画的时间
+    [SerializeField] private float teleportDelay = 0.5f; // 传送延迟
+    
+    [Header("平滑传送动画")]
+    [SerializeField] private float teleportMoveTime = 0.5f; // 平滑传送的移动时间
+    [SerializeField] private float teleportArcHeight = 1.0f; // 传送弧形路径的高度
+    [SerializeField] private bool enableTeleportJumpEffect = true; // 是否在传送时启用跳跃效果
+    [SerializeField] private bool enableTeleportSquashEffect = true; // 是否在传送时启用缩放效果
+    [SerializeField] private AnimationCurve teleportCurve; // 传送移动曲线
+    [SerializeField] private bool animateReturnTeleport = true; // 是否对传送回原位置也使用动画
+    
+    [Header("传送缩放动画")]
+    [SerializeField] private bool enableTeleportScaleAnimation = true; // 是否启用传送缩放动画
+    [SerializeField] private float minTeleportScale = 0.0f; // 传送时的最小缩放值
+    [SerializeField] private AnimationCurve teleportScaleCurve; // 传送缩放曲线
+    
+    // 位置记忆系统
+    private bool hasRememberedPosition = false; // 是否有记住的位置
+    private int rememberedRow = -1; // 记住的行坐标
+    private int rememberedColumn = -1; // 记住的列坐标
+    private Vector3 rememberedWorldPosition = Vector3.zero; // 记住的世界坐标
+    
+    // 移动控制系统
+    private bool isMovementDisabled = false; // 是否禁用WASD移动
 
 
     void Start()
@@ -87,6 +110,9 @@ public class PlayerController : MonoBehaviour
         
         // 初始化挤压拉伸曲线
         InitializeSquashCurve();
+        
+        // 初始化传送曲线
+        InitializeTeleportCurve();
     }
 
     void Update()
@@ -156,6 +182,13 @@ public class PlayerController : MonoBehaviour
     /// <param name="direction">移动方向</param>
     private void HandleMoveInput(Direction direction)
     {
+        // 检查移动是否被禁用
+        if (isMovementDisabled)
+        {
+            Debug.Log("PlayerController: WASD移动已被禁用，请先传送回原位置");
+            return;
+        }
+        
         // 只有在不移动时才处理输入
         if (!isMoving)
         {
@@ -171,6 +204,8 @@ public class PlayerController : MonoBehaviour
         if (!isMoving)
         {
             Debug.Log("PlayerController: 处理交互输入");
+            Debug.Log($"PlayerController: 当前状态 - hasRememberedPosition: {hasRememberedPosition}, isMovementDisabled: {isMovementDisabled}");
+            Debug.Log($"PlayerController: 当前位置 - ({currentRow}, {currentColumn})");
             
             // 检查相邻位置是否有interactable物体
             List<string> adjacentInteractableItems = BlockManager.Instance.GetAdjacentInteractableItems(currentRow, currentColumn);
@@ -185,14 +220,63 @@ public class PlayerController : MonoBehaviour
                     Debug.Log($"PlayerController: 与相邻的interactable物体交互: {itemName}");
                 }
                 
-                // 这里可以添加更多的交互逻辑，比如：
-                // - 播放交互音效
-                // - 显示交互UI
-                // - 触发特殊事件等
+                // 位置记忆和双向传送逻辑
+                if (!hasRememberedPosition)
+                {
+                    Debug.Log("PlayerController: 执行第一次交互逻辑（记住位置并传送）");
+                    
+                    // 第一次交互：记住当前位置，然后传送到最近的interactable物体中心
+                    RememberCurrentPosition();
+                    
+                    Vector3 nearestCenter = BlockManager.Instance.GetNearestInteractableCenterPosition(currentRow, currentColumn);
+                    if (nearestCenter != Vector3.zero)
+                    {
+                        TeleportToWorldPosition(nearestCenter);
+                        
+                        // 禁用WASD移动
+                        isMovementDisabled = true;
+                        
+                        Debug.Log($"PlayerController: 记住原位置({rememberedRow}, {rememberedColumn})，传送到最近的interactable物体中心位置: {nearestCenter}");
+                        Debug.Log("PlayerController: WASD移动已禁用，按空格返回原位置");
+                        Debug.Log($"PlayerController: 传送后状态 - hasRememberedPosition: {hasRememberedPosition}, isMovementDisabled: {isMovementDisabled}");
+                    }
+                    else
+                    {
+                        Debug.LogWarning("PlayerController: 没有找到可传送的interactable物体中心位置");
+                        // 如果找不到传送目标，清除记忆的位置
+                        ClearRememberedPosition();
+                        // 确保移动没有被禁用
+                        isMovementDisabled = false;
+                    }
+                }
+                else
+                {
+                    Debug.Log("PlayerController: 执行第二次交互逻辑（传送回原位置）");
+                    Debug.Log($"PlayerController: 准备传送回记忆位置({rememberedRow}, {rememberedColumn})");
+                    
+                    // 第二次交互：传送回记忆的位置
+                    TeleportBackToRememberedPosition();
+                    
+                    // 重新启用WASD移动
+                    isMovementDisabled = false;
+                    
+                    Debug.Log($"PlayerController: 传送回记忆的位置({rememberedRow}, {rememberedColumn})");
+                    Debug.Log("PlayerController: WASD移动已重新启用");
+                    Debug.Log($"PlayerController: 传送回后状态 - hasRememberedPosition: {hasRememberedPosition}, isMovementDisabled: {isMovementDisabled}");
+                }
             }
             else
             {
                 Debug.Log("PlayerController: 附近没有可交互的物体");
+                
+                // 如果没有相邻的interactable物体，但玩家可能在interactable物体中心想要回去
+                if (hasRememberedPosition)
+                {
+                    Debug.Log("PlayerController: 检测到在interactable物体中心，执行返回逻辑");
+                    TeleportBackToRememberedPosition();
+                    isMovementDisabled = false;
+                    Debug.Log("PlayerController: 已返回原位置，WASD移动已重新启用");
+                }
             }
             
             // 保留原有的当前地块交互逻辑
@@ -882,6 +966,72 @@ public class PlayerController : MonoBehaviour
     }
     
     /// <summary>
+    /// 初始化传送曲线
+    /// </summary>
+    private void InitializeTeleportCurve()
+    {
+        // 如果没有设置传送曲线，创建一个默认的传送曲线
+        if (teleportCurve == null || teleportCurve.keys.Length == 0)
+        {
+            teleportCurve = new AnimationCurve();
+            
+            // 创建传送曲线轨迹：
+            // 起跳时压缩 -> 跳跃中拉伸回原状 -> 落地时压缩 -> 最后回原状
+            var key1 = new Keyframe(0f, 1f);      // 起跳瞬间压缩
+            var key2 = new Keyframe(0.15f, 0f);   // 起跳后快速回到正常
+            var key3 = new Keyframe(0.5f, 0f);    // 跳跃中保持正常
+            var key4 = new Keyframe(0.85f, 0f);   // 落地前保持正常
+            var key5 = new Keyframe(0.95f, 1f);   // 落地瞬间压缩
+            var key6 = new Keyframe(1f, 0f);      // 最终回到正常
+            
+            // 设置平滑的切线
+            key1.inTangent = 0f;
+            key1.outTangent = -10f;
+            key2.inTangent = -5f;
+            key2.outTangent = 0f;
+            key3.inTangent = 0f;
+            key3.outTangent = 0f;
+            key4.inTangent = 0f;
+            key4.outTangent = 0f;
+            key5.inTangent = 0f;
+            key5.outTangent = -10f;
+            key6.inTangent = -5f;
+            key6.outTangent = 0f;
+            
+            teleportCurve.keys = new Keyframe[] { key1, key2, key3, key4, key5, key6 };
+            
+            Debug.Log("PlayerController: 已创建默认传送曲线");
+        }
+        
+        // 如果没有设置传送缩放曲线，创建一个默认的缩放曲线
+        if (teleportScaleCurve == null || teleportScaleCurve.keys.Length == 0)
+        {
+            teleportScaleCurve = new AnimationCurve();
+            
+            // 创建传送缩放曲线：
+            // 传送到中心：1.0 -> 0.0 (缩小到消失)
+            // 传送回原位置：0.0 -> 1.0 (从消失放大到正常)
+            var scaleKey1 = new Keyframe(0f, 1f);    // 起始正常大小
+            var scaleKey2 = new Keyframe(0.5f, 0f);   // 中点完全缩小
+            var scaleKey3 = new Keyframe(1f, 1f);    // 结束正常大小
+            
+            // 设置平滑的切线
+            scaleKey1.inTangent = 0f;
+            scaleKey1.outTangent = -2f;
+            scaleKey2.inTangent = -2f;
+            scaleKey2.outTangent = 2f;
+            scaleKey3.inTangent = 2f;
+            scaleKey3.outTangent = 0f;
+            
+            teleportScaleCurve.keys = new Keyframe[] { scaleKey1, scaleKey2, scaleKey3 };
+            
+            Debug.Log("PlayerController: 已创建默认传送缩放曲线");
+        }
+        
+        Debug.Log("PlayerController: 传送曲线初始化完成");
+    }
+    
+    /// <summary>
     /// 初始化Billboard相关组件
     /// </summary>
     private void InitializeBillboard()
@@ -1080,14 +1230,484 @@ public class PlayerController : MonoBehaviour
     }
     
     /// <summary>
-    /// 重新初始化玩家到初始位置（立即生效）
+    /// 重置玩家到初始位置
     /// </summary>
     public void ResetToInitialPosition()
     {
-        if (isMoving) return; // 如果正在移动中，忽略
-        
         SetPlayerToMatrixPosition(initialRow, initialColumn);
-        Debug.Log($"PlayerController: 玩家已重置到初始位置 ({initialRow}, {initialColumn})");
+        
+        // 重置时清除位置记忆
+        ClearRememberedPosition();
+        
+        Debug.Log($"PlayerController: 玩家已重置到初始位置 ({initialRow}, {initialColumn})，并清除位置记忆");
+    }
+    
+    /// <summary>
+    /// 传送到指定的世界坐标位置
+    /// </summary>
+    /// <param name="worldPosition">目标世界坐标</param>
+    public void TeleportToWorldPosition(Vector3 worldPosition)
+    {
+        if (isMoving) return;
+        
+        Debug.Log($"PlayerController: 开始传送到世界坐标: {worldPosition}");
+        Debug.Log($"PlayerController: 传送前位置 - 矩阵坐标: ({currentRow}, {currentColumn}), 世界坐标: {transform.position}");
+        
+        // 开始平滑移动到目标位置（传送到可交互中心）
+        StartCoroutine(SmoothMoveToWorldPosition(worldPosition, true));
+    }
+    
+    /// <summary>
+    /// 平滑移动到世界坐标位置
+    /// </summary>
+    /// <param name="targetWorldPosition">目标世界位置</param>
+    /// <param name="toInteractableCenter">是否是传送到可交互物体中心</param>
+    private IEnumerator SmoothMoveToWorldPosition(Vector3 targetWorldPosition, bool toInteractableCenter = true)
+    {
+        isMoving = true;
+        
+        Vector3 startWorldPosition = transform.position;
+        float elapsedTime = 0f;
+        
+        // 记录初始缩放 - 使用启动时的原始缩放，避免在传送过程中缩放值异常
+        Vector3 originalScale;
+        if (toInteractableCenter)
+        {
+            // 传送到中心时，使用当前缩放作为基准（应该是正常的1.0）
+            originalScale = transform.localScale;
+        }
+        else
+        {
+            // 传送回原位置时，使用启动时的原始缩放作为基准
+            originalScale = this.originalScale; // 使用类成员变量中存储的原始缩放
+        }
+        
+        // 计算目标位置（需要调整Y和Z坐标以匹配玩家的正确位置）
+        Vector3 targetPosition = targetWorldPosition;
+        targetPosition.y += 4.15f;  // 玩家相对于地块的Y偏移
+        targetPosition.z += 3.79f;  // 玩家相对于地块的Z偏移
+        
+        Debug.Log($"PlayerController: 开始平滑传送 - 从 {startWorldPosition} 到 {targetPosition}，方向：{(toInteractableCenter ? "到可交互中心" : "回到原位置")}");
+        Debug.Log($"PlayerController: 传送缩放设置 - 启用: {enableTeleportScaleAnimation}, 最小缩放: {minTeleportScale}, 基准缩放: {originalScale}");
+        
+        while (elapsedTime < teleportMoveTime)
+        {
+            float normalizedTime = elapsedTime / teleportMoveTime;
+            
+            // 计算贝塞尔曲线路径
+            Vector3 currentPosition = CalculateBezierPoint(normalizedTime, startWorldPosition, targetPosition);
+            
+            // 应用位置
+            transform.position = currentPosition;
+            
+            // 先计算基础缩放值
+            Vector3 baseScale = originalScale;
+            
+            // 处理缩放动画
+            if (enableTeleportScaleAnimation)
+            {
+                float scaleValue;
+                
+                if (toInteractableCenter)
+                {
+                    // 传送到可交互中心：从1.0缩放到minTeleportScale（通常是0）
+                    scaleValue = Mathf.Lerp(1.0f, minTeleportScale, teleportScaleCurve.Evaluate(normalizedTime));
+                }
+                else
+                {
+                    // 传送回原位置：从minTeleportScale（通常是0）缩放到1.0
+                    scaleValue = Mathf.Lerp(minTeleportScale, 1.0f, teleportScaleCurve.Evaluate(normalizedTime));
+                }
+                
+                baseScale = originalScale * scaleValue;
+            }
+            
+            // 应用跳跃效果（如果启用）
+            if (enableTeleportJumpEffect)
+            {
+                // 使用y位置的偏移来创建跳跃效果，注意这个偏移会叠加在贝塞尔曲线上
+                // 这里我们不额外添加偏移，因为贝塞尔曲线已经包含了弧形路径
+            }
+            
+            // 应用压缩效果（如果启用）- 在基础缩放之上应用压缩
+            if (enableTeleportSquashEffect)
+            {
+                float squashValue = teleportCurve.Evaluate(normalizedTime);
+                Vector3 squashScale = new Vector3(baseScale.x, baseScale.y + squashValue * 0.2f, baseScale.z);
+                transform.localScale = squashScale;
+            }
+            else
+            {
+                // 如果没有压缩效果，直接应用基础缩放
+                transform.localScale = baseScale;
+            }
+            
+            elapsedTime += Time.deltaTime;
+            yield return null;
+        }
+        
+        // 确保最终位置和缩放正确
+        transform.position = targetPosition;
+        
+        if (enableTeleportScaleAnimation)
+        {
+            if (toInteractableCenter)
+            {
+                // 传送到中心完成，缩放为minTeleportScale
+                transform.localScale = originalScale * minTeleportScale;
+                Debug.Log($"PlayerController: 传送到中心完成，最终缩放设置为: {transform.localScale} (原始: {originalScale} x {minTeleportScale})");
+            }
+            else
+            {
+                // 传送回原位置完成，恢复正常缩放
+                transform.localScale = originalScale;
+                Debug.Log($"PlayerController: 传送回原位置完成，最终缩放恢复为: {transform.localScale}");
+            }
+        }
+        else
+        {
+            // 如果没有启用缩放动画，确保缩放正确
+            transform.localScale = originalScale;
+            Debug.Log($"PlayerController: 缩放动画未启用，最终缩放设置为: {transform.localScale}");
+        }
+        
+        // 更新玩家的矩阵坐标
+        UpdatePlayerMatrixPositionFromWorldPosition(targetWorldPosition);
+        
+        isMoving = false;
+        
+        Debug.Log($"PlayerController: 平滑传送完成 - 最终位置: {transform.position}，最终缩放: {transform.localScale}");
+        Debug.Log($"PlayerController: 传送后矩阵坐标: ({currentRow}, {currentColumn})");
+    }
+    
+    /// <summary>
+    /// 计算贝塞尔曲线上的点
+    /// </summary>
+    /// <param name="t">时间参数 (0-1)</param>
+    /// <param name="startPos">起始位置</param>
+    /// <param name="endPos">结束位置</param>
+    /// <returns>贝塞尔曲线上的点</returns>
+    private Vector3 CalculateBezierPoint(float t, Vector3 startPos, Vector3 endPos)
+    {
+        // 计算中点并添加弧形高度
+        Vector3 midPoint = (startPos + endPos) / 2f;
+        midPoint.y += teleportArcHeight;
+        
+        // 使用二次贝塞尔曲线公式: B(t) = (1-t)²P₀ + 2(1-t)tP₁ + t²P₂
+        float oneMinusT = 1f - t;
+        Vector3 point = (oneMinusT * oneMinusT * startPos) + 
+                       (2f * oneMinusT * t * midPoint) + 
+                       (t * t * endPos);
+        
+        return point;
+    }
+    
+    /// <summary>
+    /// 记住当前玩家位置
+    /// </summary>
+    private void RememberCurrentPosition()
+    {
+        Debug.Log($"PlayerController: 开始记住当前位置");
+        Debug.Log($"PlayerController: 当前矩阵坐标: ({currentRow}, {currentColumn})");
+        Debug.Log($"PlayerController: 当前地块: {(currentBlock != null ? currentBlock.blockName : "null")}");
+        
+        rememberedRow = currentRow;
+        rememberedColumn = currentColumn;
+        if (currentBlock != null)
+        {
+            rememberedWorldPosition = currentBlock.position;
+        }
+        hasRememberedPosition = true;
+        
+        Debug.Log($"PlayerController: 记住当前位置完成 - 矩阵坐标: ({rememberedRow}, {rememberedColumn}), 世界坐标: {rememberedWorldPosition}");
+        Debug.Log($"PlayerController: hasRememberedPosition设置为: {hasRememberedPosition}");
+    }
+    
+    /// <summary>
+    /// 清除记忆的位置
+    /// </summary>
+    private void ClearRememberedPosition()
+    {
+        Debug.Log($"PlayerController: 开始清除记忆位置");
+        Debug.Log($"PlayerController: 清除前状态 - hasRememberedPosition: {hasRememberedPosition}, rememberedPos: ({rememberedRow}, {rememberedColumn})");
+        
+        hasRememberedPosition = false;
+        rememberedRow = -1;
+        rememberedColumn = -1;
+        rememberedWorldPosition = Vector3.zero;
+        
+        // 清除记忆时重新启用移动
+        isMovementDisabled = false;
+        
+        Debug.Log("PlayerController: 清除记忆的位置完成，WASD移动已重新启用");
+        Debug.Log($"PlayerController: 清除后状态 - hasRememberedPosition: {hasRememberedPosition}, isMovementDisabled: {isMovementDisabled}");
+    }
+    
+    /// <summary>
+    /// 传送回记忆的位置
+    /// </summary>
+    private void TeleportBackToRememberedPosition()
+    {
+        Debug.Log($"PlayerController: 开始传送回记忆位置");
+        Debug.Log($"PlayerController: 记忆状态 - hasRememberedPosition: {hasRememberedPosition}");
+        Debug.Log($"PlayerController: 记忆位置 - ({rememberedRow}, {rememberedColumn}), 世界坐标: {rememberedWorldPosition}");
+        
+        if (!hasRememberedPosition)
+        {
+            Debug.LogWarning("PlayerController: 没有记忆的位置可以传送回去");
+            return;
+        }
+        
+        // 检查记忆的位置是否仍然有效
+        BlockData rememberedBlock = BlockManager.Instance.GetBlockAt(rememberedRow, rememberedColumn);
+        if (rememberedBlock == null)
+        {
+            Debug.LogWarning($"PlayerController: 记忆的位置({rememberedRow}, {rememberedColumn})不再有效");
+            ClearRememberedPosition();
+            return;
+        }
+        
+        Debug.Log($"PlayerController: 记忆地块有效 - {rememberedBlock.blockName}, 可行走: {rememberedBlock.isWalkable}");
+        
+        // 检查记忆的地块是否可行走
+        if (!rememberedBlock.isWalkable)
+        {
+            Debug.LogWarning($"PlayerController: 记忆的位置({rememberedRow}, {rememberedColumn})不可行走，寻找附近的可行走地块");
+            
+            // 尝试找到附近的可行走地块
+            BlockData walkableBlock = FindNearbyWalkableBlock(rememberedRow, rememberedColumn);
+            if (walkableBlock != null)
+            {
+                // 更新记忆位置为可行走的地块
+                Debug.Log($"PlayerController: 原记忆位置: ({rememberedRow}, {rememberedColumn})");
+                rememberedRow = walkableBlock.row;
+                rememberedColumn = walkableBlock.column;
+                rememberedWorldPosition = walkableBlock.position;
+                rememberedBlock = walkableBlock;
+                Debug.Log($"PlayerController: 找到附近可行走地块，更新记忆位置为({rememberedRow}, {rememberedColumn})");
+            }
+            else
+            {
+                Debug.LogError("PlayerController: 记忆位置附近没有找到可行走的地块");
+                ClearRememberedPosition();
+                return;
+            }
+        }
+        
+        Debug.Log($"PlayerController: 准备传送到记忆位置({rememberedRow}, {rememberedColumn})");
+        
+        // 传送到记忆的位置
+        if (animateReturnTeleport)
+        {
+            // 使用动画传送回原位置
+            Debug.Log("PlayerController: 使用动画传送回原位置");
+            StartCoroutine(SmoothMoveToWorldPosition(rememberedWorldPosition, false)); // 传送回原位置
+        }
+        else
+        {
+            // 瞬间传送回原位置
+            Debug.Log("PlayerController: 瞬间传送回原位置");
+            SetPlayerToMatrixPosition(rememberedRow, rememberedColumn);
+        }
+        
+        Debug.Log($"PlayerController: 传送到记忆位置完成，当前位置: ({currentRow}, {currentColumn})");
+        
+        // 清除记忆的位置，下次交互将重新开始记忆过程
+        ClearRememberedPosition();
+        
+        Debug.Log($"PlayerController: 已传送回记忆的位置({currentRow}, {currentColumn})");
+    }
+    
+    /// <summary>
+    /// 获取当前是否有记忆的位置（用于调试或UI显示）
+    /// </summary>
+    public bool HasRememberedPosition()
+    {
+        return hasRememberedPosition;
+    }
+    
+    /// <summary>
+    /// 获取记忆的位置信息（用于调试或UI显示）
+    /// </summary>
+    public (int row, int column, Vector3 worldPos) GetRememberedPosition()
+    {
+        return (rememberedRow, rememberedColumn, rememberedWorldPosition);
+    }
+    
+    /// <summary>
+    /// 手动重置位置记忆系统（用于调试或特殊情况）
+    /// </summary>
+    public void ResetPositionMemory()
+    {
+        ClearRememberedPosition();
+        Debug.Log("PlayerController: 手动重置位置记忆系统");
+    }
+    
+    /// <summary>
+    /// 在玩家死亡或重置时清除位置记忆
+    /// </summary>
+    public void OnPlayerReset()
+    {
+        ClearRememberedPosition();
+        Debug.Log("PlayerController: 玩家重置，清除位置记忆");
+    }
+    
+    /// <summary>
+    /// 获取当前移动是否被禁用（用于调试或UI显示）
+    /// </summary>
+    public bool IsMovementDisabled()
+    {
+        return isMovementDisabled;
+    }
+    
+    /// <summary>
+    /// 手动启用或禁用移动（用于调试或特殊情况）
+    /// </summary>
+    /// <param name="disabled">是否禁用移动</param>
+    public void SetMovementDisabled(bool disabled)
+    {
+        isMovementDisabled = disabled;
+        string status = disabled ? "禁用" : "启用";
+        Debug.Log($"PlayerController: 手动{status}WASD移动");
+    }
+    
+    /// <summary>
+    /// 强制启用移动（紧急情况使用）
+    /// </summary>
+    public void ForceEnableMovement()
+    {
+        isMovementDisabled = false;
+        Debug.Log("PlayerController: 强制启用WASD移动");
+    }
+    
+    /// <summary>
+    /// 设置传送移动时间
+    /// </summary>
+    /// <param name="time">移动时间（秒）</param>
+    public void SetTeleportMoveTime(float time)
+    {
+        teleportMoveTime = Mathf.Max(0.1f, time);
+        Debug.Log($"PlayerController: 传送移动时间设置为 {teleportMoveTime}秒");
+    }
+    
+    /// <summary>
+    /// 设置传送弧形高度
+    /// </summary>
+    /// <param name="height">弧形高度</param>
+    public void SetTeleportArcHeight(float height)
+    {
+        teleportArcHeight = Mathf.Max(0f, height);
+        Debug.Log($"PlayerController: 传送弧形高度设置为 {teleportArcHeight}");
+    }
+    
+    /// <summary>
+    /// 启用或禁用传送跳跃效果
+    /// </summary>
+    /// <param name="enabled">是否启用</param>
+    public void SetTeleportJumpEffectEnabled(bool enabled)
+    {
+        enableTeleportJumpEffect = enabled;
+        Debug.Log($"PlayerController: 传送跳跃效果已{(enabled ? "启用" : "禁用")}");
+    }
+    
+    /// <summary>
+    /// 启用或禁用传送缩放效果
+    /// </summary>
+    /// <param name="enabled">是否启用</param>
+    public void SetTeleportSquashEffectEnabled(bool enabled)
+    {
+        enableTeleportSquashEffect = enabled;
+        Debug.Log($"PlayerController: 传送缩放效果已{(enabled ? "启用" : "禁用")}");
+    }
+    
+    /// <summary>
+    /// 启用或禁用传送回原位置的动画
+    /// </summary>
+    /// <param name="enabled">是否启用</param>
+    public void SetReturnTeleportAnimationEnabled(bool enabled)
+    {
+        animateReturnTeleport = enabled;
+        Debug.Log($"PlayerController: 传送回原位置动画已{(enabled ? "启用" : "禁用")}");
+    }
+    
+    /// <summary>
+    /// 获取传送动画设置
+    /// </summary>
+    /// <returns>传送动画设置的元组</returns>
+    public (float moveTime, float arcHeight, bool jumpEffect, bool squashEffect) GetTeleportSettings()
+    {
+        return (teleportMoveTime, teleportArcHeight, enableTeleportJumpEffect, enableTeleportSquashEffect);
+    }
+    
+    /// <summary>
+    /// 获取完整的传送设置
+    /// </summary>
+    /// <returns>完整的传送设置元组</returns>
+    public (float moveTime, float arcHeight, bool jumpEffect, bool squashEffect, bool animateReturn) GetFullTeleportSettings()
+    {
+        return (teleportMoveTime, teleportArcHeight, enableTeleportJumpEffect, enableTeleportSquashEffect, animateReturnTeleport);
+    }
+    
+    /// <summary>
+    /// 重置传送曲线为默认设置
+    /// </summary>
+    public void ResetTeleportCurveToDefault()
+    {
+        teleportCurve = null;
+        InitializeTeleportCurve();
+        Debug.Log("PlayerController: 传送曲线已重置为默认设置");
+    }
+    
+    /// <summary>
+    /// 根据世界坐标更新玩家的矩阵坐标
+    /// </summary>
+    /// <param name="worldPosition">世界坐标</param>
+    private void UpdatePlayerMatrixPositionFromWorldPosition(Vector3 worldPosition)
+    {
+        Debug.Log($"PlayerController: 开始更新矩阵坐标，基于世界坐标: {worldPosition}");
+        
+        float minDistance = float.MaxValue;
+        BlockData nearestBlock = null;
+        
+        // 遍历所有地块找到最近的
+        var (rows, columns) = BlockManager.Instance.GetMatrixSize();
+        for (int row = 0; row < rows; row++)
+        {
+            for (int col = 0; col < columns; col++)
+            {
+                BlockData block = BlockManager.Instance.GetBlockAt(row, col);
+                if (block != null)
+                {
+                    // 计算平面距离（忽略Y轴）
+                    Vector3 blockPos2D = new Vector3(block.position.x, 0, block.position.z);
+                    Vector3 worldPos2D = new Vector3(worldPosition.x, 0, worldPosition.z);
+                    float distance = Vector3.Distance(blockPos2D, worldPos2D);
+                    
+                    if (distance < minDistance)
+                    {
+                        minDistance = distance;
+                        nearestBlock = block;
+                    }
+                }
+            }
+        }
+        
+        // 更新玩家的矩阵坐标
+        if (nearestBlock != null)
+        {
+            Debug.Log($"PlayerController: 找到最近地块 - 距离: {minDistance:F2}");
+            Debug.Log($"PlayerController: 更新前矩阵坐标: ({currentRow}, {currentColumn})");
+            
+            currentRow = nearestBlock.row;
+            currentColumn = nearestBlock.column;
+            currentBlock = nearestBlock;
+            
+            Debug.Log($"PlayerController: 更新后矩阵坐标: ({currentRow}, {currentColumn}) - {nearestBlock.blockName}");
+        }
+        else
+        {
+            Debug.LogWarning("PlayerController: 无法找到最近的地块来更新矩阵坐标");
+        }
     }
     
     void OnDestroy()

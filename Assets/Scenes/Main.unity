@@ -373,6 +373,14 @@ PrefabInstance:
       value: 4
       objectReference: {fileID: 0}
     - target: {fileID: 6053746084808061819, guid: 96a8ed3e8d6d14487b3e5de875bb7ffa, type: 3}
+      propertyPath: teleportMoveTime
+      value: 0.2
+      objectReference: {fileID: 0}
+    - target: {fileID: 6053746084808061819, guid: 96a8ed3e8d6d14487b3e5de875bb7ffa, type: 3}
+      propertyPath: animateReturnTeleport
+      value: 1
+      objectReference: {fileID: 0}
+    - target: {fileID: 6053746084808061819, guid: 96a8ed3e8d6d14487b3e5de875bb7ffa, type: 3}
       propertyPath: squashCurve.m_Curve.Array.size
       value: 2
       objectReference: {fileID: 0}
@@ -607,6 +615,32 @@ MonoBehaviour:
   m_EditorClassIdentifier: 
   playerTransform: {fileID: 2097258582}
   offset: {x: 0, y: 20, z: -25}
+  shakeDuration: 0.2
+  shakeMagnitude: 0.2
+  shakeCurve:
+    serializedVersion: 2
+    m_Curve:
+    - serializedVersion: 3
+      time: 0
+      value: 1
+      inSlope: 0
+      outSlope: 0
+      tangentMode: 0
+      weightedMode: 0
+      inWeight: 0
+      outWeight: 0
+    - serializedVersion: 3
+      time: 1
+      value: 0
+      inSlope: 0
+      outSlope: 0
+      tangentMode: 0
+      weightedMode: 0
+      inWeight: 0
+      outWeight: 0
+    m_PreInfinity: 2
+    m_PostInfinity: 2
+    m_RotationOrder: 4
 --- !u!1 &662386539
 GameObject:
   m_ObjectHideFlags: 0
@@ -642,6 +676,7 @@ MonoBehaviour:
   LosePage: {fileID: 1792973808}
   WinPage: {fileID: 39025440}
   PerfectWinPage: {fileID: 1461182668}
+  cameraController: {fileID: 0}
   winPositions:
   - {x: 0, y: 11}
   - {x: 0, y: 12}
