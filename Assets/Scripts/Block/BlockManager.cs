@@ -2,6 +2,9 @@ using System.Collections;
 using System.Collections.Generic;
 using UnityEngine;
 using System.IO;
+#if UNITY_EDITOR
+using UnityEditor;
+#endif
 
 /// <summary>
 /// 地块数据结构
@@ -910,13 +913,14 @@ public class BlockManager : MonoBehaviour
         
         // 设置位置
         Vector3 itemPosition = block.position + block.itemOffset;
+        itemPosition.y += 2.1f;
         itemObject.transform.position = itemPosition;
         
         // 设置名称
         itemObject.name = $"Item_{config.itemName}";
         
         // 根据交互类型设置道具外观（可选：调整材质、颜色等）
-        SetItemAppearance(itemObject, block.interactionType);
+        SetItemAppearance(itemObject, block.itemName);
         
         // 保存实例引用
         block.itemInstance = itemObject;
@@ -943,7 +947,7 @@ public class BlockManager : MonoBehaviour
         itemObject.name = $"Item_{config.itemName}_Fallback";
         
         // 设置外观
-        SetItemAppearance(itemObject, block.interactionType);
+        SetItemAppearance(itemObject, block.itemName);
         
         // 保存实例引用
         block.itemInstance = itemObject;
@@ -987,7 +991,7 @@ public class BlockManager : MonoBehaviour
     /// <summary>
     /// 设置道具外观（颜色、材质等）
     /// </summary>
-    private void SetItemAppearance(GameObject itemObject, ItemInteractionType interactionType)
+    private void SetItemAppearance(GameObject itemObject, string name)
     {
         // 查找道具对象及其子物体中的所有Renderer组件
         Renderer[] renderers = itemObject.GetComponentsInChildren<Renderer>();
@@ -998,37 +1002,126 @@ public class BlockManager : MonoBehaviour
             return;
         }
         
-        // 根据交互类型设置基础颜色
-        Color baseColor = GetInteractionTypeColor(interactionType);
+        // 根据传入的name找到T_name.png，并传给子物体中material的maintex
+        Texture2D itemTexture = LoadItemTexture(name);
         
-        // 为所有Renderer组件设置颜色
+        if (itemTexture != null)
+        {
+            // 应用纹理到所有Renderer的材质
+            foreach (Renderer renderer in renderers)
+            {
+                if (renderer.material != null)
+                {
+                    renderer.material.mainTexture = itemTexture;
+                    Debug.Log($"BlockManager: 为道具 {name} 应用纹理 T_{name}.png");
+                }
+            }
+        }
+        else
+        {
+            Debug.LogWarning($"BlockManager: 未找到道具 {name} 对应的纹理文件 T_{name}.png，使用默认外观");
+            // 如果找不到纹理，设置默认颜色
+            SetDefaultItemColor(renderers, name);
+        }
+    }
+    
+    /// <summary>
+    /// 加载道具纹理文件
+    /// </summary>
+    private Texture2D LoadItemTexture(string itemName)
+    {
+        // 构造纹理文件名
+        string textureName = $"T_{itemName}";
+        
+        // 尝试从多个可能的路径加载纹理
+        Texture2D texture = null;
+        
+        // 方法1: 从Resources/Textures/加载
+        texture = Resources.Load<Texture2D>($"Textures/{textureName}");
+        
+        if (texture == null)
+        {
+            // 方法2: 从Resources/根目录加载
+            texture = Resources.Load<Texture2D>(textureName);
+        }
+        
+        // 在编辑器模式下，可以尝试从Assets/Character2D/加载
+        #if UNITY_EDITOR
+        if (texture == null)
+        {
+            string assetPath = $"Assets/Character2D/{textureName}.png";
+            texture = UnityEditor.AssetDatabase.LoadAssetAtPath<Texture2D>(assetPath);
+            
+            if (texture != null)
+            {
+                Debug.Log($"BlockManager: 在编辑器中从 {assetPath} 加载纹理成功");
+            }
+        }
+        #endif
+        
+        if (texture != null)
+        {
+            Debug.Log($"BlockManager: 成功加载道具纹理 {textureName}");
+        }
+        else
+        {
+            Debug.LogWarning($"BlockManager: 无法加载道具纹理 {textureName}，请确保纹理文件存在于以下位置之一：" +
+                           $"\n- Resources/Textures/{textureName}.png" +
+                           $"\n- Resources/{textureName}.png" +
+                           $"\n- Assets/Character2D/{textureName}.png");
+        }
+        
+        return texture;
+    }
+    
+    /// <summary>
+    /// 设置默认道具颜色（当纹理加载失败时使用）
+    /// </summary>
+    private void SetDefaultItemColor(Renderer[] renderers, string itemName)
+    {
+        // 根据道具名称或交互类型设置默认颜色
+        Color defaultColor = GetDefaultColorForItem(itemName);
+        
         foreach (Renderer renderer in renderers)
         {
             if (renderer.material != null)
             {
-                // 尝试设置主颜色
-                if (renderer.material.HasProperty("_Color"))
-                {
-                    renderer.material.color = baseColor;
-                }
-                // 如果支持BaseColor属性（URP/HDRP）
-                else if (renderer.material.HasProperty("_BaseColor"))
-                {
-                    renderer.material.SetColor("_BaseColor", baseColor);
-                }
-                // 如果支持Albedo属性（某些自定义Shader）
-                else if (renderer.material.HasProperty("_Albedo"))
-                {
-                    renderer.material.SetColor("_Albedo", baseColor);
-                }
-                else
-                {
-                    Debug.LogWarning($"BlockManager: 道具 {itemObject.name} 的材质不支持颜色设置");
-                }
+                renderer.material.color = defaultColor;
             }
         }
         
-        Debug.Log($"BlockManager: 为道具 {itemObject.name} 设置了 {interactionType} 类型的外观");
+        Debug.Log($"BlockManager: 为道具 {itemName} 设置默认颜色 {defaultColor}");
+    }
+    
+    /// <summary>
+    /// 根据道具名称获取默认颜色
+    /// </summary>
+    private Color GetDefaultColorForItem(string itemName)
+    {
+        // 可以根据道具名称设置特定颜色
+        switch (itemName.ToLower())
+        {
+            case "key":
+            case "钥匙":
+                return Color.yellow;
+            case "gem":
+            case "宝石":
+                return Color.blue;
+            case "coin":
+            case "硬币":
+                return Color.yellow;
+            case "potion":
+            case "药水":
+                return Color.red;
+            case "scroll":
+            case "卷轴":
+                return Color.white;
+            default:
+                // 根据首字母返回不同颜色
+                char firstChar = itemName.Length > 0 ? itemName.ToUpper()[0] : 'A';
+                float hue = (firstChar - 'A') / 26.0f;
+                return Color.HSVToRGB(hue, 0.7f, 0.9f);
+        }
     }
     
     /// <summary>
