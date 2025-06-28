@@ -56,6 +56,12 @@ public class PlayerController : MonoBehaviour
     [SerializeField] private bool billboardEnabled = true; // 是否启用Billboard效果
     [SerializeField] private bool onlyYAxis = false; // 是否只在Y轴上旋转
     
+    //player外观
+    [SerializeField] private Texture2D initialImg;
+    [SerializeField] private Texture2D hairNoEye;
+    [SerializeField] private Texture2D hairWithEye;
+    [SerializeField] private Texture2D eyeNoHair;
+    
     void Start()
     {
         // 保存原始缩放值
@@ -517,13 +523,18 @@ public class PlayerController : MonoBehaviour
     private void UpdateItemInventory(ItemInteractionType interactionType, string itemName)
     {
         // 添加到收集清单
-        collectedItemNames.Add(itemName);
+        if (interactionType == ItemInteractionType.Collectible)
+        {
+            collectedItemNames.Add(itemName);
+        }
+        
         
         // 根据交互类型打印不同信息
         switch (interactionType)
         {
             case ItemInteractionType.Collectible:
                 Debug.Log($"收集了道具: {itemName}");
+                UpdateCollection(itemName);
                 break;
                 
             case ItemInteractionType.Interactable:
@@ -532,6 +543,81 @@ public class PlayerController : MonoBehaviour
                 
             case ItemInteractionType.Other:
                 Debug.Log($"发现了装饰品: {itemName}");
+                break;
+        }
+    }
+
+    private void UpdateCollection(string name)
+    {
+        // 获取Character子物体的Renderer组件
+        Transform characterTransform = transform.Find("Character");
+        Renderer characterRenderer = characterTransform.GetComponent<Renderer>();
+        //收集到物品后更新player外观
+        switch (name)
+        {
+            case "Hair":
+                if (characterRenderer != null && characterRenderer.material != null)
+                {
+                    if (collectedItemNames.Contains("Eye"))
+                    {
+                        // 更换材质的主纹理为hairWithEye
+                        characterRenderer.material.mainTexture = hairWithEye;
+                    }
+                    else
+                    {
+                        // 更换材质的主纹理为hairNoEye
+                        characterRenderer.material.mainTexture = hairNoEye;
+                    }
+                }
+                else
+                {
+                    Debug.LogWarning("PlayerController: 无法更换角色外观");
+                }
+                break;
+            case "Eye":
+                if (characterRenderer != null && characterRenderer.material != null)
+                {
+                    if (collectedItemNames.Contains("Hair"))
+                    {
+                        // 更换材质的主纹理为hairWithEye
+                        characterRenderer.material.mainTexture = hairWithEye;
+                    }
+                    else
+                    {
+                        // 更换材质的主纹理为eyeNoHair
+                        characterRenderer.material.mainTexture = eyeNoHair;
+                    }
+                }
+                else
+                {
+                    Debug.LogWarning("PlayerController: 无法更换角色外观");
+                }
+                break;
+            case "LeftArm":
+                // 找到LeftArm子物体并激活它
+                Transform leftArmTransform = transform.Find("LeftArm");
+                if (leftArmTransform != null)
+                {
+                    leftArmTransform.gameObject.SetActive(true);
+                    Debug.Log("PlayerController: 已激活LeftArm子物体");
+                }
+                else
+                {
+                    Debug.LogWarning("PlayerController: 找不到LeftArm子物体");
+                }
+                break;
+            case "RightArm":
+                // 找到RightArm子物体并激活它
+                Transform rightArmTransform = transform.Find("RightArm");
+                if (rightArmTransform != null)
+                {
+                    rightArmTransform.gameObject.SetActive(true);
+                    Debug.Log("PlayerController: 已激活RightArm子物体");
+                }
+                else
+                {
+                    Debug.LogWarning("PlayerController: 找不到RightArm子物体");
+                }
                 break;
         }
     }
