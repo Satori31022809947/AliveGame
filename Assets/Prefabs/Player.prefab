@@ -45,6 +45,10 @@ MonoBehaviour:
   m_Script: {fileID: 11500000, guid: 66105d5363dea4b2d900f8910063dea8, type: 3}
   m_Name: 
   m_EditorClassIdentifier: 
+  transitionTime: 0.2
+  collectedItemNames: []
+  pickupSound: {fileID: 0}
+  pickupEffectPrefab: {fileID: 0}
 --- !u!1 &8730030137749955279
 GameObject:
   m_ObjectHideFlags: 0

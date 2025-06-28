@@ -1,6 +1,8 @@
 using System;
 using System.Collections.Generic;
 using System.IO;
+using Unity.Mathematics;
+using Unity.VisualScripting;
 using UnityEngine;
 
 [System.Serializable]
@@ -86,11 +88,16 @@ public class BeatMgr : MonoBehaviour
         if (m_enable)
         {
             long curTime = DateTime.UtcNow.ToUniversalTime().Ticks / 10000;
-            if (curTime >= startTime + (beatIndex + 1) * (60000 / bpm))
+            if (curTime >= GetBeatTime(beatIndex + 1))
             {
                 OnBeat();
             }
         }
+    }
+
+    private long GetBeatTime(long index)
+    {
+        return startTime + index * 60000 / bpm;
     }
 
     public void SetBeatStartTime(long time)
@@ -153,6 +160,28 @@ public class BeatMgr : MonoBehaviour
     public bool IsEnabled()
     {
         return m_enable;
+    }
+
+    public int GetBeatIndex()
+    {
+        return beatIndex;
+    }
+
+    public int GetNearestBeat()
+    {
+        long curTime = DateTime.UtcNow.ToUniversalTime().Ticks / 10000;
+        
+        long curBeatTime = GetBeatTime(beatIndex);
+        long nextBeatTime = GetBeatTime(beatIndex + 1);
+
+        if (Mathf.Abs(curBeatTime - curTime) <= Mathf.Abs(nextBeatTime - curTime))
+        {
+            return beatIndex;
+        }
+        else
+        {
+            return beatIndex + 1;
+        }
     }
     
     /// <summary>

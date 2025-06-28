@@ -48,6 +48,7 @@ public class InputMgr : MonoBehaviour
     
     // 输入状态记录
     private InputType lastInput = InputType.None;
+    private int lastInputBeat = -1; // 记录上一次input的时候是哪一拍
     
     void Awake()
     {
@@ -99,9 +100,31 @@ public class InputMgr : MonoBehaviour
             // 处理输入
             if (input != InputType.None)
             {
-                ProcessInput(input);
+                TryProcessInput(input);
             }
         }
+    }
+    
+    
+    /// <summary>
+    /// 尝试处理输入，一拍只能input一次
+    /// </summary>
+    /// <param name="inputType">输入类型</param>
+    /// <param name="currentBeat">当前节拍数</param>
+    /// <returns>是否成功处理输入</returns>
+    public bool TryProcessInput(InputType inputType)
+    {
+        int currentBeat = BeatMgr.Instance.GetNearestBeat(); 
+        if (currentBeat <= lastInputBeat)
+        {
+            Debug.Log($"Input Failed Because only one move in one beat {currentBeat}");
+            return false;
+        }
+        
+        Debug.Log($"Input Succeed {inputType} at beat {currentBeat}");
+        lastInputBeat = currentBeat;
+        ProcessInput(inputType);
+        return true;
     }
     
     /// <summary>
