@@ -76,14 +76,32 @@ public enum ItemInteractionType
 }
 
 /// <summary>
+/// 单个坐标点数据结构
+/// </summary>
+[System.Serializable]
+public class CoordinateData
+{
+    public int row;
+    public int col;
+    
+    public CoordinateData() { }
+    
+    public CoordinateData(int r, int c)
+    {
+        row = r;
+        col = c;
+    }
+}
+
+/// <summary>
 /// 道具配置数据结构（用于JSON反序列化）
 /// </summary>
 [System.Serializable]
 public class ItemConfig
 {
     public string itemName;                    // 道具名称
-    public int[] blockIds;                     // 占用的地块ID数组（支持1-3格）
-    public string interactionType; // 交互类型：Collectible/Interactable/Other
+    public CoordinateData[] coordinates;       // 占用的坐标数组
+    public string interactionType;            // 交互类型：Collectible/Interactable/Other
 }
 
 /// <summary>
@@ -393,24 +411,44 @@ public class BlockManager : MonoBehaviour
     {
         string configPath = Path.Combine(Application.streamingAssetsPath, "ItemConfig.json");
         
+        Debug.Log($"BlockManager: 尝试加载道具配置文件: {configPath}");
+        
         if (File.Exists(configPath))
         {
             try
             {
                 string jsonContent = File.ReadAllText(configPath);
+                Debug.Log($"BlockManager: 读取JSON内容长度: {jsonContent.Length}");
+                Debug.Log($"BlockManager: JSON内容预览: {jsonContent.Substring(0, Mathf.Min(200, jsonContent.Length))}...");
+                
                 ItemConfigFile configFile = JsonUtility.FromJson<ItemConfigFile>(jsonContent);
+                
+                if (configFile == null)
+                {
+                    Debug.LogError("BlockManager: JSON反序列化失败，configFile为null");
+                    return;
+                }
+                
+                if (configFile.itemConfigs == null)
+                {
+                    Debug.LogError("BlockManager: itemConfigs数组为null");
+                    return;
+                }
                 
                 Debug.Log($"BlockManager: 成功加载道具配置，共 {configFile.itemConfigs.Length} 个道具");
                 
                 // 应用道具配置到对应地块
-                foreach (var itemConfig in configFile.itemConfigs)
+                for (int i = 0; i < configFile.itemConfigs.Length; i++)
                 {
+                    var itemConfig = configFile.itemConfigs[i];
+                    Debug.Log($"BlockManager: 处理第 {i+1} 个道具配置: {itemConfig.itemName}");
                     ApplyItemConfig(itemConfig);
                 }
             }
             catch (System.Exception e)
             {
                 Debug.LogError($"BlockManager: 加载道具配置失败 - {e.Message}");
+                Debug.LogError($"StackTrace: {e.StackTrace}");
             }
         }
         else
@@ -424,14 +462,26 @@ public class BlockManager : MonoBehaviour
     /// </summary>
     private void ApplyItemConfig(ItemConfig config)
     {
-        // 验证blockIds数组
-        if (config.blockIds == null || config.blockIds.Length == 0)
+        Debug.Log($"BlockManager: 开始处理道具 {config.itemName}");
+        Debug.Log($"BlockManager: 道具名称: {config.itemName}");
+        Debug.Log($"BlockManager: 交互类型: {config.interactionType}");
+        
+        // 验证coordinates数组
+        if (config.coordinates == null)
         {
-            Debug.LogWarning($"BlockManager: 道具 {config.itemName} 的blockIds为空，跳过创建");
+            Debug.LogError($"BlockManager: 道具 {config.itemName} 的coordinates为null，跳过创建");
             return;
         }
         
-        if (config.blockIds.Length > 3)
+        if (config.coordinates.Length == 0)
+        {
+            Debug.LogError($"BlockManager: 道具 {config.itemName} 的coordinates数组长度为0，跳过创建");
+            return;
+        }
+        
+        Debug.Log($"BlockManager: 道具 {config.itemName} 有 {config.coordinates.Length} 个坐标");
+        
+        if (config.coordinates.Length > 3)
         {
             Debug.LogWarning($"BlockManager: 道具 {config.itemName} 占用超过3格地块，只使用前3个");
         }
@@ -439,31 +489,55 @@ public class BlockManager : MonoBehaviour
         // 解析交互类型
         ItemInteractionType interactionType = ParseInteractionType(config.interactionType);
         
-        // 检查所有地块是否存在
-        List<int> validBlockIds = new List<int>();
-        foreach (int blockId in config.blockIds)
+        // 检查所有坐标是否有效并转换为地块
+        List<BlockData> validBlocks = new List<BlockData>();
+        for (int i = 0; i < config.coordinates.Length && i < 3; i++)
         {
-            if (allBlocks.ContainsKey(blockId))
+            Debug.Log($"BlockManager: 处理第 {i+1} 个坐标");
+            CoordinateData coord = config.coordinates[i];
+            
+            // 验证坐标格式
+            if (coord == null)
             {
-                validBlockIds.Add(blockId);
+                Debug.LogError($"BlockManager: 道具 {config.itemName} 第 {i+1} 个坐标为null");
+                continue;
+            }
+            
+            int row = coord.row;
+            int col = coord.col;
+            
+            Debug.Log($"BlockManager: 坐标 [{i+1}]: ({row}, {col})");
+            
+            // 检查坐标是否在矩阵范围内
+            if (!IsValidPosition(row, col))
+            {
+                Debug.LogWarning($"BlockManager: 坐标 ({row}, {col}) 超出矩阵范围 ({rows}x{columns})，道具 {config.itemName} 将跳过此位置");
+                continue;
+            }
+            
+            // 获取对应的地块
+            BlockData block = GetBlockAt(row, col);
+            if (block != null)
+            {
+                Debug.Log($"BlockManager: 坐标 ({row}, {col}) 找到有效地块，ID: {block.blockId}");
+                validBlocks.Add(block);
             }
             else
             {
-                Debug.LogWarning($"BlockManager: 地块 {blockId} 不存在，道具 {config.itemName} 将跳过此地块");
+                Debug.LogWarning($"BlockManager: 坐标 ({row}, {col}) 没有对应的地块，道具 {config.itemName} 将跳过此位置");
             }
         }
         
-        if (validBlockIds.Count == 0)
+        if (validBlocks.Count == 0)
         {
             Debug.LogWarning($"BlockManager: 道具 {config.itemName} 没有有效的地块，跳过创建");
             return;
         }
         
         // 为所有相关地块设置道具信息
-        for (int i = 0; i < validBlockIds.Count; i++)
+        for (int i = 0; i < validBlocks.Count; i++)
         {
-            int blockId = validBlockIds[i];
-            BlockData block = allBlocks[blockId];
+            BlockData block = validBlocks[i];
             
             // 设置基本道具数据
             block.hasItem = true;
@@ -477,11 +551,11 @@ public class BlockManager : MonoBehaviour
                 CreateSimpleItemInstance(block, config);
             }
             
-            Debug.Log($"BlockManager: 在地块 {blockId} 设置道具 {config.itemName} " +
-                     $"(类型: {interactionType}, {i + 1}/{validBlockIds.Count})");
+            Debug.Log($"BlockManager: 在坐标 ({block.row}, {block.column}) 设置道具 {config.itemName} " +
+                     $"(类型: {interactionType}, {i + 1}/{validBlocks.Count})");
         }
         
-        Debug.Log($"BlockManager: 道具 {config.itemName} 创建完成，占用 {validBlockIds.Count} 个地块");
+        Debug.Log($"BlockManager: 道具 {config.itemName} 创建完成，占用 {validBlocks.Count} 个地块");
     }
     
     /// <summary>

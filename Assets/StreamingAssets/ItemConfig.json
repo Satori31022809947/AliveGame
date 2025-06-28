@@ -1,29 +1,26 @@
 {
   "itemConfigs": [
     {
-      "itemName": "纽扣眼睛",
-      "blockIds": [1],
+      "itemName": "Eye",
+      "coordinates": [
+        {"row": 0, "col": 1}
+      ],
       "interactionType": "Collectible"
     },
     {
-      "itemName": "长头发",
-      "blockIds": [2, 3],
+      "itemName": "Hair",
+      "coordinates": [
+        {"row": 1, "col": 0},
+        {"row": 1, "col": 1}
+      ],
       "interactionType": "Collectible"
-    },
-    {
-      "itemName": "机械手臂",
-      "blockIds": [5, 6, 7],
-      "interactionType": "Interactable"
     },
     {
       "itemName": "华丽衣服",
-      "blockIds": [0],
+      "coordinates": [
+        {"row": 0, "col": 0}
+      ],
       "interactionType": "Interactable"
-    },
-    {
-      "itemName": "装饰花瓶",
-      "blockIds": [4],
-      "interactionType": "Other"
     }
   ]
 } 
