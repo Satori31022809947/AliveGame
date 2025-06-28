@@ -909,37 +909,77 @@ public class BlockManager : MonoBehaviour
             block.itemName = config.itemName;
             block.linkedItemName = config.itemName; // 所有格子都链接到同一个道具名称
             //如果item类型为other，标记地块不可走
-            if (interactionType == ItemInteractionType.Other)
+            if (interactionType == ItemInteractionType.Other || interactionType == ItemInteractionType.Interactable)
             {
                 block.isWalkable = false;
-            }
-           
-
-            
-            // 只在第一个地块创建3D模型（主要显示位置）
-            //TODO：根据格子大小适配3d模型
-            if (i == 0)
-            {
-                CreateSimpleItemInstance(block, config);
             }
             
             Debug.Log($"BlockManager: 在坐标 ({block.row}, {block.column}) 设置道具 {config.itemName} " +
                      $"(类型: {interactionType}, {i + 1}/{validBlocks.Count})");
         }
         
+        // 创建3D模型
+        if (interactionType == ItemInteractionType.Interactable)
+        {
+            // 对于interactable类型，计算所有格子的中心点位置
+            Vector3 centerPosition = CalculateCenterPosition(validBlocks);
+            CreateItemInstanceAtPosition(centerPosition, config, interactionType);
+            
+            // 将实例引用保存到第一个地块（用于后续销毁等操作）
+            if (validBlocks.Count > 0)
+            {
+                // 这里需要找到刚创建的物体实例并保存引用
+                GameObject lastCreatedItem = GameObject.Find($"Item_{config.itemName}");
+                if (lastCreatedItem != null)
+                {
+                    validBlocks[0].itemInstance = lastCreatedItem;
+                }
+            }
+            
+            Debug.Log($"BlockManager: 在中心位置创建interactable道具 {config.itemName}，中心坐标: {centerPosition}");
+        }
+        else
+        {
+            // 对于其他类型，保持原有逻辑，只在第一个地块创建3D模型
+            if (validBlocks.Count > 0)
+            {
+                CreateSimpleItemInstance(validBlocks[0], config);
+            }
+        }
+        
         Debug.Log($"BlockManager: 道具 {config.itemName} 创建完成，占用 {validBlocks.Count} 个地块");
     }
     
     /// <summary>
-    /// 创建简化的道具3D模型实例
+    /// 计算多个地块的中心位置
     /// </summary>
-    private void CreateSimpleItemInstance(BlockData block, ItemConfig config)
+    private Vector3 CalculateCenterPosition(List<BlockData> blocks)
+    {
+        if (blocks == null || blocks.Count == 0)
+        {
+            return Vector3.zero;
+        }
+        
+        Vector3 centerPosition = Vector3.zero;
+        foreach (BlockData block in blocks)
+        {
+            centerPosition += block.position;
+        }
+        centerPosition /= blocks.Count;
+        
+        return centerPosition;
+    }
+    
+    /// <summary>
+    /// 在指定位置创建道具实例
+    /// </summary>
+    private void CreateItemInstanceAtPosition(Vector3 position, ItemConfig config, ItemInteractionType interactionType)
     {
         // 检查是否启用自定义预制体
         if (!useCustomItemPrefab)
         {
             Debug.Log($"BlockManager: 自定义预制体已禁用，使用基础几何体创建道具 {config.itemName}");
-            CreateFallbackItemInstance(block, config);
+            CreateFallbackItemInstanceAtPosition(position, config, interactionType);
             return;
         }
         
@@ -953,7 +993,7 @@ public class BlockManager : MonoBehaviour
             if (allowFallbackToGeometry)
             {
                 Debug.LogWarning($"{message}，回退到基础几何体");
-                CreateFallbackItemInstance(block, config);
+                CreateFallbackItemInstanceAtPosition(position, config, interactionType);
                 return;
             }
             else
@@ -966,55 +1006,86 @@ public class BlockManager : MonoBehaviour
         // 实例化道具预制体
         GameObject itemObject = Instantiate(itemPrefab);
         
-        // 设置位置
-        Vector3 itemPosition = block.position + block.itemOffset;
+        // 设置位置（使用传入的位置）
+        Vector3 itemPosition = position + Vector3.up; // 添加默认的向上偏移
         itemPosition.y += 2.1f;
         itemObject.transform.position = itemPosition;
         
         // 设置名称
         itemObject.name = $"Item_{config.itemName}";
         
-        // 根据交互类型设置道具外观（可选：调整材质、颜色等）
-        SetItemAppearance(itemObject, block.itemName);
+        // 根据交互类型设置道具外观
+        SetItemAppearance(itemObject, config.itemName);
         
-        // 保存实例引用
-        block.itemInstance = itemObject;
-        
-        // 添加动画效果
-        if (block.interactionType == ItemInteractionType.Collectible)
+        // 根据交互类型添加动画效果
+        if (interactionType == ItemInteractionType.Collectible)
         {
             AddItemAnimation(itemObject);
         }
         
-        
-        Debug.Log($"BlockManager: 使用预制体 {itemPrefabPath} 创建道具模型 {config.itemName} (交互类型: {block.interactionType})");
+        Debug.Log($"BlockManager: 使用预制体 {itemPrefabPath} 在位置 {itemPosition} 创建道具模型 {config.itemName} (交互类型: {interactionType})");
     }
     
     /// <summary>
-    /// 创建回退道具实例（当预制体加载失败时）
+    /// 在指定位置创建回退道具实例
     /// </summary>
-    private void CreateFallbackItemInstance(BlockData block, ItemConfig config)
+    private void CreateFallbackItemInstanceAtPosition(Vector3 position, ItemConfig config, ItemInteractionType interactionType)
     {
         // 创建基础几何体作为道具显示
-        GameObject itemObject = CreateItemGeometry(block.interactionType);
+        GameObject itemObject = CreateItemGeometry(interactionType);
         
-        // 设置位置
-        Vector3 itemPosition = block.position + block.itemOffset;
+        // 设置位置（使用传入的位置）
+        Vector3 itemPosition = position + Vector3.up; // 添加默认的向上偏移
         itemObject.transform.position = itemPosition;
         
         // 设置名称
         itemObject.name = $"Item_{config.itemName}_Fallback";
         
         // 设置外观
-        SetItemAppearance(itemObject, block.itemName);
-        
-        // 保存实例引用
-        block.itemInstance = itemObject;
+        SetItemAppearance(itemObject, config.itemName);
         
         // 添加动画效果
         AddItemAnimation(itemObject);
         
-        Debug.Log($"BlockManager: 使用回退方式创建道具模型 {config.itemName} (交互类型: {block.interactionType})");
+        Debug.Log($"BlockManager: 使用回退方式在位置 {itemPosition} 创建道具模型 {config.itemName} (交互类型: {interactionType})");
+    }
+    
+    /// <summary>
+    /// 创建简化的道具3D模型实例（兼容性方法）
+    /// </summary>
+    private void CreateSimpleItemInstance(BlockData block, ItemConfig config)
+    {
+        // 解析交互类型
+        ItemInteractionType interactionType = ParseInteractionType(config.interactionType);
+        
+        // 使用地块位置创建道具实例
+        CreateItemInstanceAtPosition(block.position, config, interactionType);
+        
+        // 将实例引用保存到地块
+        GameObject createdItem = GameObject.Find($"Item_{config.itemName}");
+        if (createdItem != null)
+        {
+            block.itemInstance = createdItem;
+        }
+    }
+    
+    /// <summary>
+    /// 创建回退道具实例（当预制体加载失败时）（兼容性方法）
+    /// </summary>
+    private void CreateFallbackItemInstance(BlockData block, ItemConfig config)
+    {
+        // 解析交互类型
+        ItemInteractionType interactionType = ParseInteractionType(config.interactionType);
+        
+        // 使用地块位置创建回退道具实例
+        CreateFallbackItemInstanceAtPosition(block.position, config, interactionType);
+        
+        // 将实例引用保存到地块
+        GameObject createdItem = GameObject.Find($"Item_{config.itemName}_Fallback");
+        if (createdItem != null)
+        {
+            block.itemInstance = createdItem;
+        }
     }
     
     /// <summary>
@@ -1416,4 +1487,42 @@ public class BlockManager : MonoBehaviour
     //         }
     //     }
     // }
+
+    /// <summary>
+    /// 获取指定位置相邻的所有interactable物体
+    /// </summary>
+    /// <param name="currentRow">当前行坐标</param>
+    /// <param name="currentCol">当前列坐标</param>
+    /// <returns>相邻的interactable物体名称列表</returns>
+    public List<string> GetAdjacentInteractableItems(int currentRow, int currentCol)
+    {
+        List<string> interactableItems = new List<string>();
+        HashSet<string> foundItems = new HashSet<string>(); // 避免重复添加同一个物体
+        
+        // 检查所有相邻方向
+        Direction[] directions = { Direction.Up, Direction.Down, Direction.Left, Direction.Right };
+        
+        foreach (Direction direction in directions)
+        {
+            BlockData adjacentBlock = GetAdjacentBlock(currentRow, currentCol, direction);
+            
+            if (adjacentBlock != null && adjacentBlock.hasItem && 
+                adjacentBlock.interactionType == ItemInteractionType.Interactable &&
+                !adjacentBlock.isItemCollected)
+            {
+                // 使用linkedItemName或itemName作为物体标识
+                string itemIdentifier = !string.IsNullOrEmpty(adjacentBlock.linkedItemName) 
+                    ? adjacentBlock.linkedItemName 
+                    : adjacentBlock.itemName;
+                
+                if (!foundItems.Contains(itemIdentifier))
+                {
+                    foundItems.Add(itemIdentifier);
+                    interactableItems.Add(itemIdentifier);
+                }
+            }
+        }
+        
+        return interactableItems;
+    }
 }

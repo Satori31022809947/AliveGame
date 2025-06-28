@@ -171,27 +171,49 @@ public class PlayerController : MonoBehaviour
         if (!isMoving)
         {
             Debug.Log("PlayerController: 处理交互输入");
-            // 在这里可以添加交互逻辑，比如：
-            // - 与当前地块交互
-            // - 触发特殊效果
-            // - 打开菜单等
             
+            // 检查相邻位置是否有interactable物体
+            List<string> adjacentInteractableItems = BlockManager.Instance.GetAdjacentInteractableItems(currentRow, currentColumn);
+            
+            if (adjacentInteractableItems.Count > 0)
+            {
+                // 找到相邻的interactable物体，进行交互
+                Debug.Log("成功交互！");
+                
+                foreach (string itemName in adjacentInteractableItems)
+                {
+                    Debug.Log($"PlayerController: 与相邻的interactable物体交互: {itemName}");
+                }
+                
+                // 这里可以添加更多的交互逻辑，比如：
+                // - 播放交互音效
+                // - 显示交互UI
+                // - 触发特殊事件等
+            }
+            else
+            {
+                Debug.Log("PlayerController: 附近没有可交互的物体");
+            }
+            
+            // 保留原有的当前地块交互逻辑
             if (currentBlock != null)
             {
                 Debug.Log($"与地块 {currentBlock.blockName} 交互");
                 
                 // 根据地块类型执行不同的交互
-                switch (currentBlock.blockType)
-                {
-                    case BlockType.Teleport:
-                        Debug.Log("激活传送地块！");
-                        // 可以在这里实现传送逻辑
-                        break;
-                        
-                    default:
-                        Debug.Log("这个地块没有特殊交互功能");
-                        break;
-                }
+                // switch (currentBlock.blockType)
+                // {
+                //     case BlockType.Teleport:
+                //         Debug.Log("激活传送地块！");
+                //         // 可以在这里实现传送逻辑
+                //         break;
+                //         
+                //     default:
+                //         Debug.Log("这个地块没有特殊交互功能");
+                //         break;
+                // }
+                
+                //todo: 
             }
         }
     }
