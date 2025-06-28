@@ -1,6 +1,7 @@
 using System.Collections;
 using System.Collections.Generic;
 using UnityEngine;
+using System.IO;
 
 /// <summary>
 /// 地块数据结构
@@ -19,6 +20,15 @@ public class BlockData
     // 矩阵坐标
     public int row;                        // 行坐标
     public int column;                     // 列坐标
+    
+    // 道具相关
+    public ItemType itemType = ItemType.None;    // 道具类型
+    public bool hasItem = false;                 // 是否有道具
+    public bool isItemCollected = false;         // 道具是否已被拾取
+    public int itemValue = 0;                    // 道具数值
+    public string itemName = "";                 // 道具名称
+    public GameObject itemInstance;              // 道具3D模型实例
+    public Vector3 itemOffset = Vector3.up;     // 道具相对地块的偏移
     
     public BlockData(int id, Vector3 pos, BlockType type, Transform trans, int r = -1, int c = -1)
     {
@@ -53,6 +63,43 @@ public enum Direction
     Down,        // S键 - 向下
     Left,        // A键 - 向左
     Right        // D键 - 向右
+}
+
+/// <summary>
+/// 道具类型枚举
+/// </summary>
+public enum ItemType
+{
+    None,        // 无道具
+    Coin,        // 金币
+    Gem,         // 宝石
+    Key,         // 钥匙
+    Potion       // 药水
+}
+
+/// <summary>
+/// 道具配置数据结构（用于JSON反序列化）
+/// </summary>
+[System.Serializable]
+public class ItemConfig
+{
+    public int blockId;
+    public string itemType;
+    public int itemValue;
+    public string itemName;
+    public string prefabPath;
+    public float[] position = new float[3];
+    public float[] rotation = new float[3];
+    public float[] scale = new float[3];
+}
+
+/// <summary>
+/// 道具配置文件结构
+/// </summary>
+[System.Serializable]
+public class ItemConfigFile
+{
+    public ItemConfig[] itemConfigs;
 }
 
 /// <summary>
@@ -115,6 +162,8 @@ public class BlockManager : MonoBehaviour
         InitializeMatrix();
         // 自动发现场景中的所有地块
         DiscoverAllBlocks();
+        // 加载并应用道具配置
+        LoadItemConfigurations();
     }
     
     /// <summary>
@@ -342,6 +391,194 @@ public class BlockManager : MonoBehaviour
     public (int rows, int columns) GetMatrixSize()
     {
         return (rows, columns);
+    }
+    
+    /// <summary>
+    /// 加载道具配置文件
+    /// </summary>
+    private void LoadItemConfigurations()
+    {
+        string configPath = Path.Combine(Application.streamingAssetsPath, "ItemConfig.json");
+        
+        if (File.Exists(configPath))
+        {
+            try
+            {
+                string jsonContent = File.ReadAllText(configPath);
+                ItemConfigFile configFile = JsonUtility.FromJson<ItemConfigFile>(jsonContent);
+                
+                Debug.Log($"BlockManager: 成功加载道具配置，共 {configFile.itemConfigs.Length} 个道具");
+                
+                // 应用道具配置到对应地块
+                foreach (var itemConfig in configFile.itemConfigs)
+                {
+                    ApplyItemConfig(itemConfig);
+                }
+            }
+            catch (System.Exception e)
+            {
+                Debug.LogError($"BlockManager: 加载道具配置失败 - {e.Message}");
+            }
+        }
+        else
+        {
+            Debug.LogWarning($"BlockManager: 道具配置文件不存在: {configPath}");
+        }
+    }
+    
+    /// <summary>
+    /// 应用单个道具配置到指定地块
+    /// </summary>
+    private void ApplyItemConfig(ItemConfig config)
+    {
+        if (allBlocks.ContainsKey(config.blockId))
+        {
+            BlockData block = allBlocks[config.blockId];
+            
+            // 设置道具数据
+            block.hasItem = true;
+            block.itemType = ParseItemType(config.itemType);
+            block.itemValue = config.itemValue;
+            block.itemName = config.itemName;
+            block.itemOffset = new Vector3(config.position[0], config.position[1], config.position[2]);
+            
+            // 创建道具3D模型
+            CreateItemInstance(block, config);
+            
+            Debug.Log($"BlockManager: 在地块 {config.blockId} 创建道具 {config.itemName}");
+        }
+        else
+        {
+            Debug.LogWarning($"BlockManager: 地块 {config.blockId} 不存在，无法创建道具 {config.itemName}");
+        }
+    }
+    
+    /// <summary>
+    /// 创建道具3D模型实例
+    /// </summary>
+    private void CreateItemInstance(BlockData block, ItemConfig config)
+    {
+        // 尝试从Resources文件夹加载预制体
+        GameObject itemPrefab = Resources.Load<GameObject>(config.prefabPath);
+        
+        if (itemPrefab != null)
+        {
+            // 计算道具位置
+            Vector3 itemPosition = block.position + block.itemOffset;
+            
+            // 设置旋转和缩放
+            Quaternion itemRotation = Quaternion.Euler(config.rotation[0], config.rotation[1], config.rotation[2]);
+            Vector3 itemScale = new Vector3(config.scale[0], config.scale[1], config.scale[2]);
+            
+            // 实例化道具
+            block.itemInstance = Instantiate(itemPrefab, itemPosition, itemRotation);
+            block.itemInstance.transform.localScale = itemScale;
+            
+            // 设置道具名称（便于调试）
+            block.itemInstance.name = $"Item_{config.itemName}_Block{config.blockId}";
+            
+            // 添加简单的动画效果
+            AddItemAnimation(block.itemInstance);
+        }
+        else
+        {
+            Debug.LogWarning($"BlockManager: 无法加载道具预制体: {config.prefabPath}");
+            
+            // 如果预制体不存在，创建一个简单的替代物
+            CreateFallbackItem(block, config);
+        }
+    }
+    
+    /// <summary>
+    /// 添加道具动画效果
+    /// </summary>
+    private void AddItemAnimation(GameObject itemInstance)
+    {
+        // 添加浮动和旋转动画
+        ItemAnimator animator = itemInstance.AddComponent<ItemAnimator>();
+    }
+    
+    /// <summary>
+    /// 创建替代道具（当预制体不存在时）
+    /// </summary>
+    private void CreateFallbackItem(BlockData block, ItemConfig config)
+    {
+        // 创建一个简单的立方体作为替代
+        GameObject fallbackItem = GameObject.CreatePrimitive(PrimitiveType.Cube);
+        fallbackItem.transform.position = block.position + block.itemOffset;
+        fallbackItem.transform.localScale = Vector3.one * 0.3f;
+        
+        // 根据道具类型设置颜色
+        Renderer renderer = fallbackItem.GetComponent<Renderer>();
+        switch (block.itemType)
+        {
+            case ItemType.Coin:
+                renderer.material.color = Color.yellow;
+                break;
+            case ItemType.Gem:
+                renderer.material.color = Color.blue;
+                break;
+            case ItemType.Key:
+                renderer.material.color = Color.red;
+                break;
+            case ItemType.Potion:
+                renderer.material.color = Color.green;
+                break;
+            default:
+                renderer.material.color = Color.white;
+                break;
+        }
+        
+        fallbackItem.name = $"FallbackItem_{config.itemName}_Block{config.blockId}";
+        block.itemInstance = fallbackItem;
+        
+        // 添加动画
+        AddItemAnimation(fallbackItem);
+        
+        Debug.Log($"BlockManager: 为道具 {config.itemName} 创建了替代模型");
+    }
+    
+    /// <summary>
+    /// 解析道具类型字符串
+    /// </summary>
+    private ItemType ParseItemType(string itemTypeString)
+    {
+        if (System.Enum.TryParse<ItemType>(itemTypeString, out ItemType result))
+        {
+            return result;
+        }
+        
+        Debug.LogWarning($"BlockManager: 未知的道具类型 {itemTypeString}，默认为 None");
+        return ItemType.None;
+    }
+    
+    /// <summary>
+    /// 收集指定地块的道具
+    /// </summary>
+    public bool CollectItemFromBlock(int blockId)
+    {
+        if (allBlocks.ContainsKey(blockId))
+        {
+            BlockData block = allBlocks[blockId];
+            
+            if (block.hasItem && !block.isItemCollected)
+            {
+                // 标记道具已被收集
+                block.isItemCollected = true;
+                
+                // 销毁道具3D模型
+                if (block.itemInstance != null)
+                {
+                    Destroy(block.itemInstance);
+                    block.itemInstance = null;
+                }
+                
+                Debug.Log($"BlockManager: 收集了道具 {block.itemName} (价值: {block.itemValue})");
+                return true;
+            }
+        }
+        
+        return false;
     }
 
     /// <summary>

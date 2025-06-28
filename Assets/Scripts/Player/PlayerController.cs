@@ -17,6 +17,19 @@ public class PlayerController : MonoBehaviour
     // 当前所在的地块数据
     private BlockData currentBlock;
     
+    // 道具收集统计
+    [Header("道具系统")]
+    [SerializeField] private int totalCoins = 0;
+    [SerializeField] private int totalGems = 0;
+    [SerializeField] private int totalKeys = 0;
+    [SerializeField] private int totalPotions = 0;
+    [SerializeField] private List<string> collectedItemNames = new List<string>();
+    
+    // 道具拾取音效和特效
+    [Header("拾取反馈")]
+    [SerializeField] private AudioClip pickupSound;
+    [SerializeField] private GameObject pickupEffectPrefab;
+    
     void Start()
     {
         // 订阅输入事件
@@ -222,6 +235,9 @@ public class PlayerController : MonoBehaviour
         // 处理特殊地块效果
         HandleBlockEffect(targetBlock);
         
+        // 检查并拾取道具
+        CheckAndCollectItem(targetBlock);
+        
         isMoving = false;
         
         Debug.Log($"玩家到达矩阵位置: ({currentRow}, {currentColumn}) - {targetBlock.blockName} (类型: {targetBlock.blockType})");
@@ -306,6 +322,169 @@ public class PlayerController : MonoBehaviour
         else
         {
             InputMgr.Instance.Disable();
+        }
+    }
+    
+    /// <summary>
+    /// 检查并拾取当前地块的道具
+    /// </summary>
+    private void CheckAndCollectItem(BlockData block)
+    {
+        if (block.hasItem && !block.isItemCollected)
+        {
+            // 通过BlockManager收集道具
+            bool collected = BlockManager.Instance.CollectItemFromBlock(block.blockId);
+            
+            if (collected)
+            {
+                // 更新玩家道具统计
+                UpdateItemInventory(block.itemType, block.itemValue, block.itemName);
+                
+                // 播放拾取反馈
+                PlayPickupFeedback(block);
+                
+                Debug.Log($"PlayerController: 拾取了 {block.itemName} (价值: {block.itemValue})");
+            }
+        }
+    }
+    
+    /// <summary>
+    /// 更新玩家道具库存
+    /// </summary>
+    private void UpdateItemInventory(ItemType itemType, int itemValue, string itemName)
+    {
+        // 添加到收集清单
+        collectedItemNames.Add(itemName);
+        
+        // 根据道具类型更新对应计数
+        switch (itemType)
+        {
+            case ItemType.Coin:
+                totalCoins += itemValue;
+                Debug.Log($"金币 +{itemValue}，总数: {totalCoins}");
+                break;
+                
+            case ItemType.Gem:
+                totalGems += itemValue;
+                Debug.Log($"宝石 +{itemValue}，总数: {totalGems}");
+                break;
+                
+            case ItemType.Key:
+                totalKeys += itemValue;
+                Debug.Log($"钥匙 +{itemValue}，总数: {totalKeys}");
+                break;
+                
+            case ItemType.Potion:
+                totalPotions += itemValue;
+                Debug.Log($"药水 +{itemValue}，总数: {totalPotions}");
+                break;
+        }
+    }
+    
+    /// <summary>
+    /// 播放拾取反馈效果
+    /// </summary>
+    private void PlayPickupFeedback(BlockData block)
+    {
+        // 播放音效
+        if (pickupSound != null)
+        {
+            AudioSource.PlayClipAtPoint(pickupSound, transform.position);
+        }
+        
+        // 播放特效
+        if (pickupEffectPrefab != null)
+        {
+            Vector3 effectPosition = block.position + Vector3.up;
+            GameObject effect = Instantiate(pickupEffectPrefab, effectPosition, Quaternion.identity);
+            
+            // 3秒后销毁特效
+            Destroy(effect, 3f);
+        }
+        
+        // 可以在这里添加更多反馈，比如：
+        // - UI提示
+        // - 屏幕震动
+        // - 分数飘字等
+    }
+    
+    /// <summary>
+    /// 获取玩家道具统计
+    /// </summary>
+    public (int coins, int gems, int keys, int potions) GetItemStats()
+    {
+        return (totalCoins, totalGems, totalKeys, totalPotions);
+    }
+    
+    /// <summary>
+    /// 获取已收集道具列表
+    /// </summary>
+    public List<string> GetCollectedItems()
+    {
+        return new List<string>(collectedItemNames);
+    }
+    
+    /// <summary>
+    /// 重置道具统计（用于新游戏）
+    /// </summary>
+    public void ResetItemStats()
+    {
+        totalCoins = 0;
+        totalGems = 0;
+        totalKeys = 0;
+        totalPotions = 0;
+        collectedItemNames.Clear();
+        
+        Debug.Log("PlayerController: 道具统计已重置");
+    }
+    
+    /// <summary>
+    /// 检查是否拥有特定数量的道具
+    /// </summary>
+    public bool HasItem(ItemType itemType, int requiredAmount = 1)
+    {
+        switch (itemType)
+        {
+            case ItemType.Coin:
+                return totalCoins >= requiredAmount;
+            case ItemType.Gem:
+                return totalGems >= requiredAmount;
+            case ItemType.Key:
+                return totalKeys >= requiredAmount;
+            case ItemType.Potion:
+                return totalPotions >= requiredAmount;
+            default:
+                return false;
+        }
+    }
+    
+    /// <summary>
+    /// 消耗道具
+    /// </summary>
+    public bool ConsumeItem(ItemType itemType, int amount = 1)
+    {
+        if (!HasItem(itemType, amount)) return false;
+        
+        switch (itemType)
+        {
+            case ItemType.Coin:
+                totalCoins -= amount;
+                Debug.Log($"消耗了 {amount} 个金币，剩余: {totalCoins}");
+                return true;
+            case ItemType.Gem:
+                totalGems -= amount;
+                Debug.Log($"消耗了 {amount} 个宝石，剩余: {totalGems}");
+                return true;
+            case ItemType.Key:
+                totalKeys -= amount;
+                Debug.Log($"消耗了 {amount} 个钥匙，剩余: {totalKeys}");
+                return true;
+            case ItemType.Potion:
+                totalPotions -= amount;
+                Debug.Log($"消耗了 {amount} 个药水，剩余: {totalPotions}");
+                return true;
+            default:
+                return false;
         }
     }
     

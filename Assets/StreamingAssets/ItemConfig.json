@@ -1,0 +1,14 @@
+{
+  "itemConfigs": [
+    {
+      "blockId": 1,
+      "itemType": "Coin",
+      "itemValue": 10,
+      "itemName": "金币",
+      "prefabPath": "Prefabs/Item",
+      "position": [0, 1, 0],
+      "rotation": [0, 0, 0],
+      "scale": [1, 1, 1]
+    }
+  ]
+} 
