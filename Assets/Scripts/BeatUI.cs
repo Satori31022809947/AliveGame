@@ -3,15 +3,21 @@ using UnityEngine.UI;
 
 public class BeatUI : MonoBehaviour
 {
-    [SerializeField] private Text beatIndexText; // 用于显示 BeatIndex 的 Text 组件
     [SerializeField] private GameObject[] objectsToShow; // 三个需要根据 BeatIndex 显示的 GameObject
 
     [SerializeField] private GameObject DangerEffect;
     [SerializeField] private GameObject WarningEffect;
-    
+    [SerializeField] private Text beatRatioText; // 新增：用于显示比值的 Text 组件
+    [SerializeField] private Slider beatProgressSlider; // 新增：用于显示条状进度的 Slider 组件
+
     private void Start()
     {
-        beatIndexText.gameObject.SetActive(false);
+        if (beatRatioText != null) {
+            beatRatioText.gameObject.SetActive(false);
+        }
+        if (beatProgressSlider != null) {
+            beatProgressSlider.gameObject.SetActive(false);
+        }
         HideAllObjects();
     }
 
@@ -27,9 +33,16 @@ public class BeatUI : MonoBehaviour
     public void UpdateBeatUI(int beatIndex, BeatType beatType)
     {
         
-        beatIndexText.gameObject.SetActive(true);
+        if (beatRatioText != null) {
+            beatRatioText.gameObject.SetActive(true);
+            beatRatioText.text = beatIndex + "/" + GameMgr.Instance.BeatLimit;
+        }
+        if (beatProgressSlider != null) {
+            beatProgressSlider.gameObject.SetActive(true);
+            float ratio = (float)beatIndex / GameMgr.Instance.BeatLimit;
+            beatProgressSlider.value = ratio;
+        }
         HideAllObjects();
-        beatIndexText.text = "Beat Index: " + beatIndex;
         ShowObjectBasedOnIndex(beatIndex);
         ShowEffect(beatType);
     }

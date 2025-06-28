@@ -1567,9 +1567,25 @@ PrefabInstance:
     serializedVersion: 3
     m_TransformParent: {fileID: 1443115913}
     m_Modifications:
+    - target: {fileID: 2759544704826042228, guid: 9369665f16fe04c41a4cc27d50138554, type: 3}
+      propertyPath: m_AnchorMax.y
+      value: 0
+      objectReference: {fileID: 0}
+    - target: {fileID: 2977750772775627575, guid: 9369665f16fe04c41a4cc27d50138554, type: 3}
+      propertyPath: m_AnchorMax.y
+      value: 0
+      objectReference: {fileID: 0}
     - target: {fileID: 3996902353158671835, guid: 9369665f16fe04c41a4cc27d50138554, type: 3}
       propertyPath: m_Name
       value: BeatUI
+      objectReference: {fileID: 0}
+    - target: {fileID: 4328693150171187280, guid: 9369665f16fe04c41a4cc27d50138554, type: 3}
+      propertyPath: m_AnchorMax.x
+      value: 0
+      objectReference: {fileID: 0}
+    - target: {fileID: 4328693150171187280, guid: 9369665f16fe04c41a4cc27d50138554, type: 3}
+      propertyPath: m_AnchorMax.y
+      value: 0
       objectReference: {fileID: 0}
     - target: {fileID: 4768615280689848406, guid: 9369665f16fe04c41a4cc27d50138554, type: 3}
       propertyPath: m_Pivot.x
