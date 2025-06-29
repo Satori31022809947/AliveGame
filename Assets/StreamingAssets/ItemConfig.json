@@ -29,21 +29,21 @@
       "interactionType": "Collectible"
     },
     {
-      "itemName": "Book",
+      "itemName": "Light2",
       "coordinates": [
         {"row": 8, "col": 0}
       ],
       "interactionType": "Other"
     },
     {
-      "itemName": "TV",
+      "itemName": "Cup",
       "coordinates": [
         {"row": 5, "col": 3}
       ],
       "interactionType": "Other"
     },
     {
-      "itemName": "Light",
+      "itemName": "Light1",
       "coordinates": [
         {"row": 5, "col": 4}
       ],
