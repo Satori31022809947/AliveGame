@@ -1266,7 +1266,7 @@ MonoBehaviour:
   m_Name: 
   m_EditorClassIdentifier: 
   playerTransform: {fileID: 2097258582}
-  offset: {x: 0, y: 20, z: -25}
+  offset: {x: 0, y: 23.7, z: -30}
   shakeDuration: 0.2
   shakeMagnitude: 0.2
   shakeCurve:
