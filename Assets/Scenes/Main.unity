@@ -2123,6 +2123,10 @@ PrefabInstance:
       propertyPath: m_AnchorMax.y
       value: 0
       objectReference: {fileID: 0}
+    - target: {fileID: 3258036110852063804, guid: 9369665f16fe04c41a4cc27d50138554, type: 3}
+      propertyPath: moveDuration
+      value: 1.8
+      objectReference: {fileID: 0}
     - target: {fileID: 3996902353158671835, guid: 9369665f16fe04c41a4cc27d50138554, type: 3}
       propertyPath: m_Name
       value: BeatUI
