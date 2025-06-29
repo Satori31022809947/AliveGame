@@ -35,7 +35,7 @@ public class InputMgr : MonoBehaviour
     }
 
     private bool m_enable = false; // 默认不启用输入
-    
+
     // 事件声明 - 当检测到输入时触发
     public static event Action<InputType> OnInputDetected;
     
@@ -56,6 +56,12 @@ public class InputMgr : MonoBehaviour
 
     [SerializeField] private long leftEps = 200;
     [SerializeField] private long rightEps = 200;
+    [SerializeField] private GameObject PerfectUI;
+    [SerializeField] private GameObject NotPerfectUI;
+    [SerializeField] private float UIRemainDuration = 0.5f;
+
+    private float UIRemainingTime;
+    
     
 
     void Start()
@@ -96,6 +102,13 @@ public class InputMgr : MonoBehaviour
             {
                 TryProcessInput(input);
             }
+        }
+        UIRemainingTime -= Time.deltaTime;
+        if (UIRemainingTime <= 0)
+        {
+            UIRemainingTime = 0;
+            PerfectUI.gameObject.SetActive(false);
+            NotPerfectUI.gameObject.SetActive(false);
         }
     }
     
@@ -143,12 +156,18 @@ public class InputMgr : MonoBehaviour
 
         if (!isPerfect)
         {
+            NotPerfectUI.SetActive(true);
+            PerfectUI.SetActive(false);
             StartCoroutine(DelayNonPerfectInputActions());
         }
         else
         {
+            NotPerfectUI.SetActive(false);
+            PerfectUI.SetActive(true);
             Debug.Log("Perfect Input");
         }
+
+        UIRemainingTime = UIRemainDuration;
         ProcessInput(inputType);
         return true;
     }
@@ -227,6 +246,8 @@ public class InputMgr : MonoBehaviour
     public void Disable()
     {
         m_enable = false;
+        PerfectUI.gameObject.SetActive(false);
+        NotPerfectUI.gameObject.SetActive(false);
         Debug.Log("InputMgr: 输入检测已禁用");
     }
     
