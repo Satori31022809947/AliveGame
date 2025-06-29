@@ -2511,7 +2511,7 @@ PrefabInstance:
     - target: {fileID: 8891552689843735287, guid: c583ef51f383cd94fabe57a9ecddcff7, type: 3}
       propertyPath: backgroundMusic
       value: 
-      objectReference: {fileID: 8300000, guid: a36e960446e522b4fa31842c92659295, type: 3}
+      objectReference: {fileID: 8300000, guid: 5980ce725296b0f418161708fd71f125, type: 3}
     - target: {fileID: 8891552689843735287, guid: c583ef51f383cd94fabe57a9ecddcff7, type: 3}
       propertyPath: soundEffectSource
       value: 
