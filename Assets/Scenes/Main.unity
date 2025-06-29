@@ -156,11 +156,11 @@ RectTransform:
   - {fileID: 1682880904}
   m_Father: {fileID: 1443115913}
   m_LocalEulerAnglesHint: {x: 0, y: 0, z: 0}
-  m_AnchorMin: {x: 1, y: 1}
-  m_AnchorMax: {x: 1, y: 1}
-  m_AnchoredPosition: {x: -1545, y: -887}
+  m_AnchorMin: {x: 0, y: 0}
+  m_AnchorMax: {x: 0, y: 0}
+  m_AnchoredPosition: {x: 148, y: 153}
   m_SizeDelta: {x: 160, y: 30}
-  m_Pivot: {x: 1, y: 1}
+  m_Pivot: {x: 0, y: 0}
 --- !u!114 &23687639
 MonoBehaviour:
   m_ObjectHideFlags: 0
@@ -1975,10 +1975,10 @@ RectTransform:
   - {fileID: 969185250}
   - {fileID: 70057808}
   - {fileID: 1792973809}
-  - {fileID: 39025441}
-  - {fileID: 1461182669}
   - {fileID: 575813295}
   - {fileID: 1657354196}
+  - {fileID: 39025441}
+  - {fileID: 1461182669}
   - {fileID: 23687638}
   - {fileID: 167347988}
   - {fileID: 207536497}
@@ -2602,6 +2602,10 @@ PrefabInstance:
     - target: {fileID: 1080306357576380215, guid: 8ceb2f48c7713044590e16550ffb13e9, type: 3}
       propertyPath: m_FontData.m_FontSize
       value: 25
+      objectReference: {fileID: 0}
+    - target: {fileID: 3266394168321650842, guid: 8ceb2f48c7713044590e16550ffb13e9, type: 3}
+      propertyPath: m_IsActive
+      value: 0
       objectReference: {fileID: 0}
     - target: {fileID: 3423783168160379366, guid: 8ceb2f48c7713044590e16550ffb13e9, type: 3}
       propertyPath: m_OnClick.m_PersistentCalls.m_Calls.Array.data[0].m_Target
