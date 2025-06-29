@@ -49,6 +49,8 @@ public class BeatMgr : MonoBehaviour
     [SerializeField] private BeatUI beatUI;             // 节拍器UI
     [SerializeField] private string beatConfigPath = "BeatConfig.json";
     [SerializeField] private PlayerController playerController;
+    [SerializeField] private float DelayStartCheckTime = 0.1f;
+    [SerializeField] private float EarlyStopCheckTime = 0.1f;
 
     private List<BeatSequenceItem> BeatSequence = new List<BeatSequenceItem>();
     private Dictionary<int, BeatType> BeatMap =  new Dictionary<int, BeatType>();
@@ -139,7 +141,7 @@ public class BeatMgr : MonoBehaviour
         {
             case BeatType.Dangerous:
                 Debug.Log("BeatMgr: OnBeat: Dangerous");
-                playerController.detectDangerous = true;
+                StartCoroutine(DelayStartCheck());
                 break;
             case BeatType.Warning:
                 Debug.Log("BeatMgr: OnBeat: Warning");
@@ -154,12 +156,33 @@ public class BeatMgr : MonoBehaviour
         {
             StartCoroutine(DelayPlayWarningSound());
         }
+        if (beatType != BeatType.Dangerous)
+        {
+            StartCoroutine(EarlyStopCheck());
+        }
     }
 
     private IEnumerator DelayPlayWarningSound()
     {
         yield return new WaitForSeconds(0.65f);
         AudioMgr.Instance.PlaySoundEffect(SoundEffectType.Warning, 2f);
+    }
+    private IEnumerator DelayStartCheck()
+    {
+        yield return new WaitForSeconds(DelayStartCheckTime);
+        playerController.detectDangerous = true;
+        Debug.Log("BeatMgr: OnBeat: StartCheckDangerous");
+    }
+
+    private IEnumerator EarlyStopCheck()
+    {
+        float waitTime = GetBeatLength(1) / 1000.0f;
+        yield return new WaitForSeconds(waitTime - EarlyStopCheckTime);
+        if (playerController.detectDangerous)
+        {
+            playerController.detectDangerous = false;
+            Debug.Log("BeatMgr: OnBeat: EndCheckDangerous");
+        }
     }
 
     public BeatType GetBeatType(int beatIndex)
