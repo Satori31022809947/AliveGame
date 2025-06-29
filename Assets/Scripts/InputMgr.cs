@@ -58,15 +58,28 @@ public class InputMgr : MonoBehaviour
     [SerializeField] private long rightEps = 200;
     [SerializeField] private GameObject PerfectUI;
     [SerializeField] private GameObject NotPerfectUI;
-    [SerializeField] private float UIRemainDuration = 0.5f;
+    [SerializeField] private float UIRemainDuration = 0.2f;
+    [SerializeField] private float UIFadeDuration = 0.2f;
 
     private float UIRemainingTime;
+    private Vector3 initialUIPosition;
+    private CanvasGroup perfectUICanvasGroup;
+    private CanvasGroup notPerfectUICanvasGroup;
     
     
 
     void Start()
     {
         Debug.Log("InputMgr: 输入管理器已启动");
+        if (PerfectUI != null)
+        {
+            initialUIPosition = PerfectUI.transform.localPosition;
+            perfectUICanvasGroup = PerfectUI.AddComponent<CanvasGroup>();
+        }
+        if (NotPerfectUI != null)
+        {
+            notPerfectUICanvasGroup = NotPerfectUI.AddComponent<CanvasGroup>();
+        }
     }
 
     void Update()
@@ -104,7 +117,29 @@ public class InputMgr : MonoBehaviour
             }
         }
         UIRemainingTime -= Time.deltaTime;
-        if (UIRemainingTime <= 0)
+        
+        if (UIRemainingTime > 0)
+        {
+            float progress = 1 - UIRemainingTime/ UIFadeDuration;
+            float moveDistance = 100f; // 上移距离
+
+            if (UIRemainingTime > UIFadeDuration)
+            {
+                progress = 0;
+            }
+            
+            if (PerfectUI != null)
+            {
+                PerfectUI.transform.localPosition = initialUIPosition + new Vector3(0, moveDistance * progress, 0);
+                perfectUICanvasGroup.alpha = 1 - progress;
+            }
+            if (NotPerfectUI != null)
+            {
+                NotPerfectUI.transform.localPosition = initialUIPosition + new Vector3(0, moveDistance * progress, 0);
+                notPerfectUICanvasGroup.alpha = 1 - progress;
+            }
+        }
+        else
         {
             UIRemainingTime = 0;
             PerfectUI.gameObject.SetActive(false);
@@ -167,7 +202,7 @@ public class InputMgr : MonoBehaviour
             Debug.Log("Perfect Input");
         }
 
-        UIRemainingTime = UIRemainDuration;
+        UIRemainingTime = UIRemainDuration + UIFadeDuration;
         ProcessInput(inputType);
         return true;
     }
