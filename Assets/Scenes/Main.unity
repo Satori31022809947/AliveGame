@@ -1027,7 +1027,7 @@ MonoBehaviour:
   m_Name: 
   m_EditorClassIdentifier: 
   sceneLight: {fileID: 1939973010}
-  warningFlashDuration: 0.18
+  warningFlashDuration: 0.3
 --- !u!4 &1362579060
 Transform:
   m_ObjectHideFlags: 0
