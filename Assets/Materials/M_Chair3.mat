@@ -7,7 +7,7 @@ Material:
   m_CorrespondingSourceObject: {fileID: 0}
   m_PrefabInstance: {fileID: 0}
   m_PrefabAsset: {fileID: 0}
-  m_Name: M_Chair1
+  m_Name: M_Chair3
   m_Shader: {fileID: 46, guid: 0000000000000000f000000000000000, type: 0}
   m_Parent: {fileID: 0}
   m_ModifiedSerializedProperties: 0
@@ -44,11 +44,11 @@ Material:
         m_Scale: {x: 1, y: 1}
         m_Offset: {x: 0, y: 0}
     - _EmissionMap:
-        m_Texture: {fileID: 2800000, guid: 5fdb02e0330194e5989456f06c7ae493, type: 3}
+        m_Texture: {fileID: 2800000, guid: becea1ef1b184423385fccb7e2d930b8, type: 3}
         m_Scale: {x: 1, y: -1}
         m_Offset: {x: 0, y: 0}
     - _MainTex:
-        m_Texture: {fileID: 2800000, guid: 0d95392115f5e4a31983eaffe7c4e46e, type: 3}
+        m_Texture: {fileID: 2800000, guid: 3fb7714bf214042ba84108aeefd43795, type: 3}
         m_Scale: {x: 1, y: -1}
         m_Offset: {x: 0, y: 0}
     - _MetallicGlossMap:
