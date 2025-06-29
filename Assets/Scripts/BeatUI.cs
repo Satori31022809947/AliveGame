@@ -10,20 +10,12 @@ public class BeatUI : MonoBehaviour
     [SerializeField] private GameObject DangerEffect;
     [SerializeField] private GameObject WarningEffect;
     [SerializeField] private GameObject EndPos;
-    [SerializeField] private Text beatRatioText; // 新增：用于显示比值的 Text 组件
-    [SerializeField] private Slider beatProgressSlider; // 新增：用于显示条状进度的 Slider 组件
     [SerializeField] private Vector2 startPosition; // 修改为 RectTransform 类型
     [SerializeField] private Vector2 endPosition; // 修改为 RectTransform 类型
     [SerializeField] private float moveDuration = 1f; // 新增：移动时长
 
     private void Start()
     {
-        if (beatRatioText != null) {
-            beatRatioText.gameObject.SetActive(false);
-        }
-        if (beatProgressSlider != null) {
-            beatProgressSlider.gameObject.SetActive(false);
-        }
         HideAllObjects();
     }
 
@@ -41,17 +33,7 @@ public class BeatUI : MonoBehaviour
     }
 
     public void UpdateBeatUI(int beatIndex, BeatType beatType)
-    {   
-        if (beatRatioText != null) {
-            beatRatioText.gameObject.SetActive(true);
-            beatRatioText.text = beatIndex + "/" + GameMgr.Instance.BeatLimit;
-        }
-        if (beatProgressSlider != null) {
-            beatProgressSlider.gameObject.SetActive(true);
-            float ratio = (float)beatIndex / GameMgr.Instance.BeatLimit;
-            beatProgressSlider.value = ratio;
-        }
-
+    {  
         if (EndPos != null)
         {
             EndPos.SetActive(true);
