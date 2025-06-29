@@ -167,17 +167,6 @@ public class InputMgr : MonoBehaviour
         }
         
         lastInputBeat = currentBeat;
-
-        if (inputType == InputType.Interact)
-        {
-            if (BeatMgr.Instance.GetBeatIndex() % 3 != 1)
-            {
-                Debug.Log("Input Interacted 失败，因为不在重拍上");
-                // 交互失败
-                OnInteractFailed?.Invoke();
-                return false;
-            }
-        }
         
         Debug.Log($"Input Succeed {inputType} at beat {currentBeat}");
         if (isPerfect)

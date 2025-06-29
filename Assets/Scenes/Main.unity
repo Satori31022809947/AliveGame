@@ -1037,7 +1037,7 @@ MonoBehaviour:
   m_EditorClassIdentifier: 
   noiseValue: 0
   noiseThreshold: 100
-  noiseAddValue: 20
+  noiseAddValue: 5
   noiseDecreaseSpeed: 5
 --- !u!4 &387498927
 Transform:

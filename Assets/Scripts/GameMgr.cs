@@ -197,6 +197,7 @@ public class GameMgr : MonoBehaviour
         {
             LosePage.SetActive(true);
         }
+        EndGame();
     }
     
     /// <summary>
