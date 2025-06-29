@@ -114,6 +114,10 @@ public class BeatMgr : MonoBehaviour
         startTime = time + baseTime;
         beatIndex = 0;
         beatUI.UpdateBeatUI(beatIndex, BeatType.None);
+        for (int i = 0; i < 3; i++)
+        {
+            beatUI.ShowObjectBasedOnIndex(i, GetBeatLength(3 - i)/1000.0f);
+        }
         beatUI.OnShowBeatUI();
         Enable();
     }
