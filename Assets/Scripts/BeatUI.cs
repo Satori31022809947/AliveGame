@@ -32,13 +32,16 @@ public class BeatUI : MonoBehaviour
         
     }
 
+    public void OnShowBeatUI()
+    {
+        
+    }
     private void OnDestroy()
     {
     }
 
     public void UpdateBeatUI(int beatIndex, BeatType beatType)
-    {
-        
+    {   
         if (beatRatioText != null) {
             beatRatioText.gameObject.SetActive(true);
             beatRatioText.text = beatIndex + "/" + GameMgr.Instance.BeatLimit;
@@ -112,25 +115,49 @@ public class BeatUI : MonoBehaviour
 
         if (indexToShow >= 0 && indexToShow < objectsToShow.Length && objectsToShow[indexToShow] != null)
         {
-            var targetRect = objectsToShow[indexToShow].GetComponent<RectTransform>();
-            if (targetRect != null && startPosition != null && endPosition != null)
-            {
-                objectsToShow[indexToShow].SetActive(true);
-                targetRect.anchoredPosition = startPosition;
-                StartCoroutine(MoveObject(targetRect, startPosition, endPosition, moveDuration));
-            }
+            // 原对象不显示
+            objectsToShow[indexToShow].SetActive(false);
+            StartCoroutine(MoveAndDestroyObject(indexToShow, startPosition, endPosition, moveDuration, 0));
         }
     }
 
-    private IEnumerator MoveObject(RectTransform target, Vector2 startPos, Vector2 endPos, float duration)
+    private IEnumerator MoveAndDestroyObject(int indexToShow, Vector2 startPos, Vector2 endPos, float duration, float assumedTime = 0f)
     {
-        float elapsedTime = 0;
-        while (elapsedTime < duration)
+        /*
+         *  0 ~ getbeatlength(3)-duration   empty
+         *  getbeatlength(3)-duration ~ getlength(3)
+         */
+
+        float beatLength = BeatMgr.Instance.GetBeatLength(3) / 1000.0f;
+        float createTime = beatLength - duration;
+        
+        if (assumedTime < beatLength)
         {
-            target.anchoredPosition = Vector2.Lerp(startPos, endPos, elapsedTime / duration);
-            elapsedTime += Time.deltaTime;
-            yield return null;
+            float elapsedTime = assumedTime;
+            while (elapsedTime < createTime)
+            {   
+                elapsedTime += Time.deltaTime;
+                yield return null;
+            }
+            
+            // 复制对象
+            GameObject objToDestroy = Instantiate(objectsToShow[indexToShow], objectsToShow[indexToShow].transform.parent);
+            RectTransform target = objToDestroy.GetComponent<RectTransform>();
+            if (target != null)
+            {
+                objToDestroy.SetActive(true);;
+            }
+            
+            while (elapsedTime < beatLength)
+            {
+                target.anchoredPosition = Vector2.Lerp(startPos, endPos, elapsedTime / duration);
+                
+                elapsedTime += Time.deltaTime;
+                yield return null;
+            }
+
+            target.anchoredPosition = endPos;
+            Destroy(objToDestroy);
         }
-        target.anchoredPosition = endPos;
     }
 }

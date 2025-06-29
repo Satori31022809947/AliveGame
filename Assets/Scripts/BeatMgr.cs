@@ -104,11 +104,17 @@ public class BeatMgr : MonoBehaviour
         return startTime + index * 60000 / bpm;
     }
 
+    public long GetBeatLength(long count)
+    {
+        return count * 60000 / bpm;
+    }
+
     public void SetBeatStartTime(long time)
     {
         startTime = time + baseTime;
         beatIndex = 0;
         beatUI.UpdateBeatUI(beatIndex, BeatType.None);
+        beatUI.OnShowBeatUI();
         Enable();
     }
 
