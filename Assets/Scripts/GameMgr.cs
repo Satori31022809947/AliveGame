@@ -26,6 +26,7 @@ public class GameMgr : MonoBehaviour
 
     public Button startGameButton;
     public GameObject StartGamePage;
+    public GameObject creditsPage; // 制作者名单页面引用
     private DateTime gameStartTime;
     public PlayerController mainPlayer;
     public GameObject LosePage;
@@ -206,5 +207,35 @@ public class GameMgr : MonoBehaviour
     #else
         Application.Quit();
     #endif
+    }
+
+    /// <summary>
+    /// 打开制作者名单，禁止点击开始游戏
+    /// </summary>
+    public void OpenCredits()
+    {
+        if (startGameButton != null)
+        {
+            startGameButton.interactable = false;
+        }
+        if (creditsPage != null)
+        {
+            creditsPage.SetActive(true);
+        }
+    }
+
+    /// <summary>
+    /// 关闭制作者名单，恢复开始游戏点击功能
+    /// </summary>
+    public void CloseCredits()
+    {
+        if (startGameButton != null)
+        {
+            startGameButton.interactable = true;
+        }
+        if (creditsPage != null)
+        {
+            creditsPage.SetActive(false);
+        }
     }
 }
