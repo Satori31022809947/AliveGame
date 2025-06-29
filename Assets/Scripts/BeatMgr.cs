@@ -142,12 +142,15 @@ public class BeatMgr : MonoBehaviour
             case BeatType.Dangerous:
                 Debug.Log("BeatMgr: OnBeat: Dangerous");
                 StartCoroutine(DelayStartCheck());
+                LightMgr.Instance.SetDangerousLight();
                 break;
             case BeatType.Warning:
                 Debug.Log("BeatMgr: OnBeat: Warning");
+                LightMgr.Instance.StartWarningFlash(GetBeatLength(1)/1000.0f);
                 break;
             case BeatType.None:
                 playerController.detectDangerous = false;
+                LightMgr.Instance.ResetLight();
                 break;
         }   
         beatUI.UpdateBeatUI(beatIndex, beatType);
