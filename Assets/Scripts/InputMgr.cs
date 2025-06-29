@@ -122,7 +122,7 @@ public class InputMgr : MonoBehaviour
 
         if (inputType == InputType.Interact)
         {
-            if (BeatMgr.Instance.GetBeatIndex() % 3 != 0)
+            if (BeatMgr.Instance.GetBeatIndex() % 3 != 1)
             {
                 Debug.Log("Input Interacted 失败，因为不在重拍上");
                 // 交互失败

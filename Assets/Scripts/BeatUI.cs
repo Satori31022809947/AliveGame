@@ -128,6 +128,7 @@ public class BeatUI : MonoBehaviour
          *  getbeatlength(3)-duration ~ getlength(3)
          */
 
+        indexToShow = (indexToShow + 1) % 3;
         float beatLength = BeatMgr.Instance.GetBeatLength(3) / 1000.0f;
         float createTime = beatLength - duration;
         
