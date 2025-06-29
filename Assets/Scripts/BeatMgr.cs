@@ -78,7 +78,7 @@ public class BeatMgr : MonoBehaviour
             {
                 Debug.Log(t.index + "  " + t.type);
                 BeatSequenceItem item = new BeatSequenceItem();
-                item.index = t.index;
+                item.index = t.index + 2;
                 item.type = ParseBeatType(t.type);
                 BeatSequence.Add(item);
             }
@@ -164,7 +164,7 @@ public class BeatMgr : MonoBehaviour
 
     private IEnumerator DelayPlayWarningSound()
     {
-        yield return new WaitForSeconds(0.65f);
+        yield return new WaitForSeconds(0.15f);
         AudioMgr.Instance.PlaySoundEffect(SoundEffectType.Warning, 2f);
     }
     private IEnumerator DelayStartCheck()
