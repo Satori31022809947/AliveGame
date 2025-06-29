@@ -218,6 +218,7 @@ public class BeatMgr : MonoBehaviour
     public void Disable()
     {
         m_enable = false;
+        beatUI.gameObject.SetActive(false);
         Debug.Log("BeatMgr: 节拍器已禁用");
     }
     

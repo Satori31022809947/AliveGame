@@ -186,6 +186,8 @@ public class GameMgr : MonoBehaviour
                 WinPage.SetActive(true);
             }
         }
+
+        EndGame();
     }
 
     public void Lose()
