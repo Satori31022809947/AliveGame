@@ -109,7 +109,7 @@ public class BeatUI : MonoBehaviour
         EndPos.SetActive(false);
     }
 
-    private void ShowObjectBasedOnIndex(int beatIndex)
+    public void ShowObjectBasedOnIndex(int beatIndex, float assumedTime = 0f)
     {
         int indexToShow = beatIndex % 3;
 
@@ -117,7 +117,7 @@ public class BeatUI : MonoBehaviour
         {
             // 原对象不显示
             objectsToShow[indexToShow].SetActive(false);
-            StartCoroutine(MoveAndDestroyObject(indexToShow, startPosition, endPosition, moveDuration, 0));
+            StartCoroutine(MoveAndDestroyObject(indexToShow, startPosition, endPosition, moveDuration, assumedTime));
         }
     }
 
